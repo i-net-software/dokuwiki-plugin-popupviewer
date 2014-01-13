@@ -16,9 +16,9 @@ require_once(DOKU_PLUGIN.'syntax.php');
 class syntax_plugin_popupviewer extends DokuWiki_Syntax_Plugin {
 
     function getInfo(){
-        return array_merge(confToHash(dirname(__FILE__).'/info.txt'), array(
-				'name' => 'PopOut Viewer Linking Component',
-				'desc' => 'Takes a Page to be diplayed in an popoutviewer pop-out'
+        return array_merge(confToHash(dirname(__FILE__).'/plugin.info.txt'), array(
+				'name' => 'PopUpViewer Linking Component',
+				'desc' => 'Takes a Page to be diplayed in an overlay pop-out'
 				));
     }
 

@@ -16,7 +16,10 @@ require_once(DOKU_PLUGIN.'action.php');
 class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
 
     function getInfo(){
-        return array();
+    	return array_merge(confToHash(dirname(__FILE__).'/plugin.info.txt'), array(
+				'name' => 'PopUpViewer Action Component',
+				'desc' => 'Delivers pages back to the browser'
+				));
     }
 
     function register(&$controller) {
