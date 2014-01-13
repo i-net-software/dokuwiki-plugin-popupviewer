@@ -1,5 +1,6 @@
 # General Plugin Info do not edit
 
+base   popupviewer
 author i-net software
 email  tools@inetsoftware.de
 date   2012-02-24
