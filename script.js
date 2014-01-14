@@ -164,24 +164,16 @@ var popupviewer = function(showContent, isImage, width, height) {
 
 	this.setSize = function() {
 
-		var style = "width:" + this.endWidth + 'px;';
-		if (!this.isImage) {
-			style += "height:" + this.endHeight + 'px;';
-		}
+		$(this.contentDiv).css({
+			'width' : this.endWidth + 'px',
+			'height' : !this.isImage ? this.endHeight + 'px' : 'auto'
+		});
 
-		this.contentDiv.style.cssText = style; // Really nasty IE6 hacking!
-		this.contentDiv.setAttribute('style', style);
-
-		style = "top:" + this.endMarginTop + 'px;';
-
-		if (!this.isRTL) {
-			style += "left:" + this.endMarginLeft + 'px;';
-		} else {
-			style += "right:" + this.endMarginLeft + 'px;';
-		}
-
-		this.controlDiv.style.cssText = style; // Really nasty IE6 hacking!
-		this.controlDiv.setAttribute('style', style);
+		$(self.controlDiv).css({
+			'top'   : this.endMarginTop + 'px',
+			'left'  : self.isRTL ? this.endMarginLeft + 'px' : 'auto',
+			'right' : !self.isRTL ? this.endMarginLeft + 'px' : 'auto',
+		});
 	};
 
 	this.addNextAndPrevious = function() {
@@ -350,23 +342,23 @@ var popupviewer = function(showContent, isImage, width, height) {
 						$('#popupviewer_content').append(container);
 
 						self.setContentSize(selfCallback.image.offsetWidth,selfCallback.image.offsetHeight,container.offsetHeight);
-						var style = 'width:' + self.endWidth + 'px; height:' + self.endHeight + 'px;';
-						selfCallback.image.style.cssText = style; // Really nasty IE6 hacking!
-						selfCallback.image.setAttribute('style', style);
+						$(selfCallback.image).css({
+							'width':self.endWidth + 'px',
+							'height':self.endHeight + 'px',
+						})
 					};
 
 					var errorCallback = function() {
-						$('#popupviewer_content').append(selfCallback.image);
 						$('#popupviewer_loader_div').remove();
+						$('#popupviewer_content').append(selfCallback.image);
 						self.contentDiv.className = 'dokuwiki';
 						self.contentDiv.className = 'isImage';
 
 						self.setContentSize(selfCallback.image.offsetWidth, selfCallback.image.offsetHeight);
-						var style = 'width:' + self.endWidth + 'px; height:' + self.endHeight + 'px;';
-						selfCallback.image.style.cssText = style; // Really
-																	// nasty IE6
-																	// hacking!
-						selfCallback.image.setAttribute('style', style);
+						$(selfCallback.image).css({
+							'width':self.endWidth + 'px',
+							'height':self.endHeight + 'px',
+						})
 
 					};
 
@@ -441,41 +433,64 @@ var popupviewer = function(showContent, isImage, width, height) {
 		}
 	};
 
-	this.errorCallback = function(ajax) {
+	// lets try iframe on an error
+	// This relies on the postMessage function of newer browsers
+	// and needs: if ( typeof parent != 'undefined' && parent.postMessage) {
+	// parent.postMessage(document.body.scrollHeight, '*'); }
+	// on the onload function of the loaded pages body.
+	this.errorCallback = function(successaction) {
 
-		var id = "errorCallbackForm";
-		$('#'+id).remove();
+		// Build Frame
+		var iframe = document.createElement("iframe");
+		iframe.id = "__contentIFrame";
+		iframe.name = "__contentIFrame";
+		iframe.setAttribute('scrolling', 'no');
+		iframe.style.display = "none";
 
-		var form = document.createElement("form");
-		form.setAttribute("action", self.page);
-		form.setAttribute("method", "POST");
-		form.id = id;
-		ajax.requestFile = self.page;
-		self.wasError = true;
+		var finished = false;
+		var messageFunction = function(event) {
 
-		document.getElementsByTagName("body")[0].appendChild(form);
-
-		// Create Completion function
-		ajax.onCompletion = function() {
-
-			if (ajax.responseXML) {
-				var dwEle = $(ajax.responseXML).find('div.dokuwiki');
-				if (dwEle.length > 0) {
-					ajax.response = '<div class="dokuwiki">'
-							+ dwEle[0].innerHTML + "</div>";
-				}
+			finished = true;
+			var data = event.data || event.originalEvent.data;
+			// If this message does not come with what we want, discard it.
+			if ((typeof data).toLowerCase() == "string" || !data.message
+					|| data.message != 'frameContent') {
+				alert("Could not load page via popupviewer. The page responded with a wrong message.");
+				return;
 			}
+			
+			successaction(data.body);
 
-            if ( typeof self.callback == "function" ) {
-    			self.callback(ajax.response);
-			}
-			if (typeof ajax.execute == "object" && ajax.execute.srcForm) {
-				$(ajax.execute.srcForm).remove();
-			}
+			$(iframe).remove();
+
+			// Clear the window Event after we are done!
+			$(window).unbind("message", messageFunction);
 		};
 
-		// call via proxy
-		var proxy = new iframeProxy(ajax, form);
+		// load event for the iframe to display the content
+		$(iframe).bind('load', function() {
+
+			// Check If we can send a postMessage
+			if (iframe.contentWindow.postMessage) {
+
+				// Register the Message Event for PostMessage receival
+				$(window).bind("message", messageFunction);
+
+				// Send a message
+				var message = "getFrameContent";
+				iframe.contentWindow.postMessage(message, "*");
+			}
+		});
+
+		window.setTimeout(function() {
+			if (!finished) {
+				$(iframe).remove();
+				alert("Could not load page via popupviewer. The page is not available.");
+			}
+		}, 30000);
+
+		iframe.src = self.page;
+		document.getElementsByTagName('body')[0].appendChild(iframe);
 	};
 
 	this.loadAndDisplayPage = function(page, width, height, id, params) {
@@ -504,17 +519,17 @@ var popupviewer = function(showContent, isImage, width, height) {
 		if ( e.keyCode ) {
 			switch( e.keyCode ) {
 				case 39: // Right
-					if ( $('#popupviewer_control_nextImage').size() > 0 && !this.getLast() ) {
-						this.dispatchClick($('popupviewer_control_nextImage'));
+					if ( $('#popupviewer_control_nextImage').size() > 0 && !self.getLast() ) {
+						self.dispatchClick($('popupviewer_control_nextImage'));
 					}
 					break;
 				case 37: // Left
-					if ( $('#popupviewer_control_prevoiusImage').size() > 0 && !this.getFirst() ) {
-						this.dispatchClick($('#popupviewer_control_prevoiusImage'));
+					if ( $('#popupviewer_control_prevoiusImage').size() > 0 && !self.getFirst() ) {
+						self.dispatchClick($('#popupviewer_control_prevoiusImage'));
 					}
 					break;
 				case 27: // Escape
-					this.removeOldViewer();
+					self.removeOldViewer();
 					break;
 			}
 		}
@@ -529,41 +544,28 @@ var popupviewer = function(showContent, isImage, width, height) {
 			url = DOKU_BASE + 'lib/exe/ajax.php';
 		}
 
-		var ajax = new sack(url);
-		ajax.AjaxFailedAlert = function() {};
-		ajax.encodeURIString = true;
-		ajax.onCompletion = function() {
-
-			if ((ajax.response === "" || (typeof ajax.xmlhttp.status != "undefined" && ajax.xmlhttp.status != 200))
-					&& typeof errorCallback == "function") {
-				errorCallback(ajax);
-				return true;
-			}
-
+		var success = function (data) {
+			
 			// Google Ping
 			if ( typeof googleanalytics_trackLink != "undefined" ) {
 				googleanalytics_trackLink(trackLink);
 			}
 			if ( typeof callback == "function" ) {
-    			callback(ajax.response);
+    			callback(data);
 			}
 		};
 
-		for ( var option in options) {
-			if (option === null || options[option] === null ) {
-				continue;
+		jQuery('#popupviewer_content').load(url, options, function( response, status, xhr ) {
+		
+			if ( status == "error" ) {
+				// Retry
+				errorCallback(success);
+			} else {
+				success(response);
 			}
-			ajax.setVar(option, options[option]);
-			if ( option == 'id' ) { trackLink = "/" + options[option].replace(new RegExp(":", "g"), "/"); }
-		}
+		
+		} );
 
-		try {
-			ajax.runAJAX();
-		} catch (e) {
-			if (typeof errorCallback != "undefined") {
-				errorCallback(ajax);
-			}
-		}
 	};
 
 	this.preg_replace_callback = function(pattern, callback, subject, limit) {
@@ -637,6 +639,26 @@ var popupviewer = function(showContent, isImage, width, height) {
 	this.removeOldViewer();
 	this.displayContent(showContent, isImage, width, height);
 };
+
+jQuery(function() {
+	jQuery(window).bind("message", function(event){
+		
+		var data = event.data || event.originalEvent.data;
+		var source = event.source || event.originalEvent.source;
+		if (data != "getFrameContent") {
+			return;
+		}
+
+		try {
+			source.postMessage({
+				message : "frameContent",
+				body : jQuery('html').html()
+			}, "*");
+		} catch (e) {
+			alert("Fatal Exception! Could not load page via popupviewer.\n" + e);
+		}
+	});
+});
 
 var checkImageRoutine = function(inputImage) {
 
@@ -715,106 +737,4 @@ var checkImageRoutine = function(inputImage) {
 	this.image = inputImage;
 	this.image.onload = this.finish;
 	this.image.onabord = this.finish;
-};
-
-var iframeProxy = function(ajax, srcForm) {
-
-	// Setup
-	var self = this;
-
-	if ( jQuery ) {
-		var $ = jQuery;
-	}
-
-	this.iframe = null;
-	this.ajax = ajax;
-	this.error = false;
-	this.srcForm = srcForm;
-	this.src = typeof this.ajax.requestFile != 'undefined' && this.ajax.requestFile !== null ? this.ajax.requestFile : this.srcForm.getAttribute('action');
-	
-	this.onCompletion = function(self) {
-
-		try {
-			self.ajax.responseXML = window.frames[self.iframe.id].document;
-		} catch (e) {
-			try {
-				self.ajax.response = window.frames[self.iframe.id].document.body.innerHTML;
-			} catch (ee) { /* DEAD END */
-			}
-		}
-
-		self.ajax.execute = self;
-
-		try {
-			self.ajax.onCompletion();
-		} catch (ee) {
-			self.error = ee;
-			alert(ee);
-			return false;
-		}
-
-		// Clean Up
-		var self2 = self;
-		window.setTimeout(function() {
-			if (self2.iframe) {
-				$(self2.iframe).remove();
-			}
-		}, 500);
-
-		return true;
-	};
-
-	if ( typeof this.src == 'undefined' ) {
-		self.onCompletion(self);
-		return;
-	}
-	
-	this.name = "iframeProxy"
-		+ escape(this.src.replace(new RegExp("[\\W]", "g"), "")) + "_"
-		+ Math.round(Math.random() * 1000000);
-
-
-	// Return on duplicate
-	if ($('#'+this.name).size() > 0) {
-		this.error = "iframe exists";
-		return;
-	}
-
-	// Build Frame
-	this.iframe = document.createElement("iframe");
-
-	this.iframe.src = this.src;
-	this.iframe.name = this.name;
-	this.iframe.id = this.name;
-	this.iframe.width = "0px";
-	this.iframe.height = "0px";
-	this.iframe.style.display = "none";
-	this.iframe.frameBorder = false;
-
-	var wrapEvent = function() {
-		self.onCompletion(self);
-	};
-
-	$(this.iframe).load(wrapEvent);
-
-	try {
-		document.getElementsByTagName("body")[0].appendChild(this.iframe);
-		this.srcForm.target = this.name;
-		this.srcForm.onsubmit = function() {
-		};
-
-		$(this.iframe).load(wrapEvent);
-		// Stupid Event Creation in Iframes
-		if (this.iframe.addEventListener) {
-			this.iframe.addEventListener('load', wrapEvent, false);
-		} else if (this.iframe.attachEvent) {
-			this.iframe.attachEvent('onload', wrapEvent);
-		} else {
-			this.srcForm.submit();
-		}
-
-	} catch (e) { /* DEAD END */
-		this.error = e;
-		alert("Dead End: " + e);
-	}
 };
