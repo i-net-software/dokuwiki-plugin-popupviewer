@@ -169,10 +169,10 @@ var popupviewer = function(showContent, isImage, width, height) {
 			'height' : !this.isImage ? this.endHeight + 'px' : 'auto'
 		});
 
-		$(self.controlDiv).css({
+		$(this.controlDiv).css({
 			'top'   : this.endMarginTop + 'px',
 			'left'  : self.isRTL ? this.endMarginLeft + 'px' : 'auto',
-			'right' : !self.isRTL ? this.endMarginLeft + 'px' : 'auto',
+			'right' : !self.isRTL ? this.endMarginLeft + 'px' : 'auto'
 		});
 	};
 
@@ -284,7 +284,7 @@ var popupviewer = function(showContent, isImage, width, height) {
 	this.removeOldViewer = function()
 	{
 		if ($('#popupviewer').size() > 0) {
-			$('#popupviewer').remove()
+			$('#popupviewer').remove();
 			$(document).unbind('keydown', self.globalEvent);
 		}
 		document.getElementsByTagName('body')[0].style.overflow = 'auto';
@@ -533,7 +533,6 @@ var popupviewer = function(showContent, isImage, width, height) {
 					break;
 			}
 		}
-		
 		return;
 	};
 
@@ -555,7 +554,7 @@ var popupviewer = function(showContent, isImage, width, height) {
 			}
 		};
 
-		jQuery('#popupviewer_content').load(url, options, function( response, status, xhr ) {
+		$('#popupviewer_content').load(url, options, function( response, status, xhr ) {
 		
 			if ( status == "error" ) {
 				// Retry
@@ -564,7 +563,7 @@ var popupviewer = function(showContent, isImage, width, height) {
 				success(response);
 			}
 		
-		} );
+		});
 
 	};
 
@@ -640,8 +639,8 @@ var popupviewer = function(showContent, isImage, width, height) {
 	this.displayContent(showContent, isImage, width, height);
 };
 
-jQuery(function() {
-	jQuery(window).bind("message", function(event){
+(function($){
+	$(window).bind("message", function(event){
 		
 		var data = event.data || event.originalEvent.data;
 		var source = event.source || event.originalEvent.source;
@@ -658,7 +657,7 @@ jQuery(function() {
 			alert("Fatal Exception! Could not load page via popupviewer.\n" + e);
 		}
 	});
-});
+})(jQuery);
 
 var checkImageRoutine = function(inputImage) {
 
