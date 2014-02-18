@@ -25,7 +25,6 @@ var popupviewer = function(showContent, isImage, width, height) {
 	this.popupImageStack = null;
 
 	this.showContent = null;
-	this.isRTL = false;
 	
 	var self = this;
 
@@ -102,23 +101,21 @@ var popupviewer = function(showContent, isImage, width, height) {
 		// If given, we want the optimal size
 		if ( offsetElement )
 		{
-    		try {
-        		// IE8 has isues
-        		offsetElement.style.display = 'fixed';
-    		} catch(e) {}
-
-    		offsetElement.style.visibility = 'hidden';
-    		offsetElement.style.width = '';
-    		offsetElement.style.height = '';
+			offsetElement = $(offsetElement);
+       		offsetElement.css({
+       			position: 'fixed',
+       			visibility: 'hidden',
+       			width: 'auto',
+       			height: 'auto'
+       		});
     		
-    		height = offsetElement.offsetHeight;
-    		width = offsetElement.offsetWidth;
+    		height = $(offsetElement).height();
+    		width = $(offsetElement).width();
 
-    		try {
-        		// IE8 has isues
-        		offsetElement.style.display = '';
-    		} catch(e) {}
-    		offsetElement.style.visibility = '';
+       		offsetElement.css({
+       			position: '',
+       			visibility: 'visible',
+       		});
 		}
 
 		width = parseFloat(width);
@@ -149,8 +146,8 @@ var popupviewer = function(showContent, isImage, width, height) {
 		this.endWidth = width + (this.isImage ? 0 : 24); // 24 Px for padding + Border if is Image
 		this.endHeight = height;
 
-		var xOffset = document.body.scrollLeft || document.documentElement.scrollLeft || window.pageXOffset || 0;
-		var yOffset = document.body.scrollTop || document.documentElement.scrollTop || window.pageYOffset || 0;
+		var xOffset = $(document).scrollLeft() || 0;
+		var yOffset = $(document).scrollTop() || 0;
 
 		this.endMarginTop = (this.screenHeight - height) * 0.5 + yOffset;
 		if (this.endMarginTop < 5) {
@@ -165,14 +162,13 @@ var popupviewer = function(showContent, isImage, width, height) {
 	this.setSize = function() {
 
 		$(this.contentDiv).css({
-			'width' : this.endWidth + 'px',
-			'height' : !this.isImage ? this.endHeight + 'px' : 'auto'
+			'width' : this.endWidth,
+			'height' : !this.isImage ? this.endHeight : 'auto'
 		});
 
 		$(this.controlDiv).css({
-			'top'   : this.endMarginTop + 'px',
-			'left'  : self.isRTL ? this.endMarginLeft + 'px' : 'auto',
-			'right' : !self.isRTL ? this.endMarginLeft + 'px' : 'auto'
+			'top'   : this.endMarginTop,
+			'left'  : this.endMarginLeft,
 		});
 	};
 
@@ -191,7 +187,7 @@ var popupviewer = function(showContent, isImage, width, height) {
 			var nextImage = document.createElement('a');
 			nextImage.id = 'popupviewer_control_nextImage';
 
-			var self = this;
+			var selfNAP = this;
 			var skipEvent = function(event) { /* To be implemented */
 
 				if (!event) {
@@ -199,7 +195,7 @@ var popupviewer = function(showContent, isImage, width, height) {
 				}
 
 				var target = ((event.target) ? event.target : event.srcElement).id.indexOf("next") > 0 ? 1 : -1;
-				self.skipToImage(target);
+				selfNAP.skipToImage(target);
 			};
 
 			// If this is not the last image - set inactive
@@ -256,14 +252,8 @@ var popupviewer = function(showContent, isImage, width, height) {
 		var overlayDiv = document.createElement('div');
 		overlayDiv.id = 'popupviewer_overlay';
 
-		var arVersion = navigator.appVersion.split("MSIE");
-		var version = parseFloat(arVersion[1]);
-		if (!(version >= 5.0 && version < 7.0)) {
-			overlayDiv.style.position = 'fixed';
-		} else {
-			overlayDiv.style.height = (document.body.offsetHeight -1 ) + 'px';
-			overlayDiv.style.width = (document.body.offsetWidth -1 ) + 'px';
-		}
+		overlayDiv.style.height = (document.body.offsetHeight -1 ) + 'px';
+		overlayDiv.style.width = (document.body.offsetWidth -1 ) + 'px';
 
 		sampleDiv.appendChild(overlayDiv);
 
@@ -316,12 +306,12 @@ var popupviewer = function(showContent, isImage, width, height) {
 			}
 
 			var check = new checkImageRoutine(img);
-			var self = this;
+			var selfIR = this;
 			var callback = {
 
 				image : img,
 				error : function() {
-					self.removeOldViewer();
+					selfIR.removeOldViewer();
 				},
 				finalize : function() {
 
@@ -337,37 +327,37 @@ var popupviewer = function(showContent, isImage, width, height) {
 
 						$('#popupviewer_loader_div').remove();
 						$('#popupviewer_content').append(selfCallback.image);
-						self.contentDiv.className = 'dokuwiki';
-						self.contentDiv.className = 'isImage';
+						selfIR.contentDiv.className = 'dokuwiki';
+						selfIR.contentDiv.className = 'isImage';
 						$('#popupviewer_content').append(container);
 
-						self.setContentSize(selfCallback.image.offsetWidth,selfCallback.image.offsetHeight,container.offsetHeight);
+						selfIR.setContentSize(selfCallback.image.offsetWidth,selfCallback.image.offsetHeight,container.offsetHeight);
 						$(selfCallback.image).css({
-							'width':self.endWidth + 'px',
-							'height':self.endHeight + 'px',
+							'width':self.endWidth,
+							'height':self.endHeight,
 						})
 					};
 
 					var errorCallback = function() {
 						$('#popupviewer_loader_div').remove();
 						$('#popupviewer_content').append(selfCallback.image);
-						self.contentDiv.className = 'dokuwiki';
-						self.contentDiv.className = 'isImage';
+						selfIR.contentDiv.className = 'dokuwiki';
+						selfIR.contentDiv.className = 'isImage';
 
-						self.setContentSize(selfCallback.image.offsetWidth, selfCallback.image.offsetHeight);
+						selfIR.setContentSize(selfCallback.image.offsetWidth, selfCallback.image.offsetHeight);
 						$(selfCallback.image).css({
-							'width':self.endWidth + 'px',
-							'height':self.endHeight + 'px',
+							'width':selfIR.endWidth,
+							'height':selfIR.endHeight,
 						})
 
 					};
 
-					if (self.additionalContent) {
-						callback(self.additionalContent);
+					if (selfIR.additionalContent) {
+						callback(selfIR.additionalContent);
 					} else {
-						self.runAJAX(callback, {
+						selfIR.runAJAX(callback, {
 							'call' : '_popup_load_image_meta',
-							'id' : self.additionalContentID
+							'id' : selfIR.additionalContentID
 						}, errorCallback);
 					}
 
@@ -378,6 +368,15 @@ var popupviewer = function(showContent, isImage, width, height) {
 		} else {
 			this.contentDiv.className = 'dokuwiki';
 			this.contentDiv.innerHTML = showContent;
+			
+			var images = $(this.contentDiv).find('img').each(function(){
+				(new checkImageRoutine(this)).checkLoadImage(50, {
+					finalize: function() {
+						self.setContentSize(width, height, null, self.contentDiv);
+					}
+				});
+			});
+			
 			this.setContentSize(width, height, null, this.contentDiv);
 		}
 	};
@@ -495,15 +494,13 @@ var popupviewer = function(showContent, isImage, width, height) {
 
 	this.loadAndDisplayPage = function(page, width, height, id, params) {
 
-		if (this.event) {
-			var elem = (this.event.target) ? this.event.target : this.event.srcElement;
-			this.page = elem.href == page ? elem.getAttribute('href') : "";
+		if (self.event) {
+			var elem = (self.event.target) ? self.event.target : self.event.srcElement;
+			self.page = elem.href == page ? elem.getAttribute('href') : "";
 		}
 
-		this.endWidth = width;
-		this.endHeight = height;
-
-		var self = this;
+		self.endWidth = width;
+		self.endHeight = height;
 
 		// Set custom params
 		if ( (typeof params).toLowerCase() != "object" ) { params = {}; }
@@ -716,9 +713,9 @@ var checkImageRoutine = function(inputImage) {
 			return false;
 		}
 		if (!this.isImageOk()) {
-			var self = this;
+			var selfCLI = this;
 			setTimeout(function() {
-				self.checkLoadImage(count - 1, callback);
+				selfCLI.checkLoadImage(count - 1, callback);
 			}, 100);
 			return;
 		}
