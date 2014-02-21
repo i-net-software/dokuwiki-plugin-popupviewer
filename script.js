@@ -1,644 +1,575 @@
-var popupviewer = function(showContent, isImage, width, height) {
-
-	if ( jQuery ) {
-		var $ = jQuery;
-	}
-
-	this.screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-	this.screenHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-	this.contentDiv = null;
-	this.controlDiv = null;
-	this.maxWidthFactor = 0.7;
-	this.maxHeightFactor = 0.8;
-	this.maxWidth = null;
-	this.maxHeight = null;
-	this.endWidth = 0;
-	this.endHeight = 0;
-	this.endMarginTop = 0;
-	this.endMarginLeft = 0;
-	this.isImage = false;
-	this.additionalContent = null;
-	this.additionalContentID = null;
-	this.page = null;
-	this.event = null;
-	this.wasError = false;
-	this.popupImageStack = null;
-
-	this.showContent = null;
+(function($){
 	
-	var self = this;
-
-	this.getFirst = function() { /* To be implemented */
-		if (!this.popupImageStack) {
-			return false;
-		}
-		return this.popupImageStack[0].id == this.page;
+	var popupviewer = function() {
 	};
-
-	this.getLast = function() { /* To be implemented */
-		if (!this.popupImageStack) {
-			return false;
-		}
-		return this.popupImageStack[this.popupImageStack.length - 1].id == this.page;
+	
+	/* singleton */
+	var instance = null;
+	$.popupviewer = function() {
+		return instance || (instance = new popupviewer());
 	};
+	
+	// Static functions
+	(function(_){
 
-	this.skipToImage = function(itemNr) {
-
+		var viewer = null;
+		var content = null;
+		var additionalContent = null;
+		var BASE_URL = DOKU_BASE + 'lib/exe/ajax.php';
+		var viewerIsFixed = false;
+		var next = null;
 		var previous = null;
-		var elem = null;
-		for ( var item in this.popupImageStack) {
-
-			if ( !this.popupImageStack.hasOwnProperty(item) )
-			{
-				continue;
-			}
-
-			var check = this.popupImageStack[item];
-			
-			// previous was inpoint
-			if (previous && previous.id == this.page) {
-				elem = check;
-				break;
-			}
-
-			// Found + must go
-			if (check.id == this.page && itemNr < 0) {
-				elem = previous;
-				break;
-			}
-
-			previous = check;
-			elem = check;
-		}
-
-		if (elem) {
-			this.dispatchClick(elem);
-		}
-	};
-	
-	this.dispatchClick = function(elem) {
-		if (elem == null) {
-			return;
-		}
 		
-		$(elem).trigger('click');
-	};
-
-	this.setContentSize = function(width, height, offsetHeight, offsetElement) {
-
-		if (!this.contentDiv || !this.controlDiv) {
-			return;
-		}
-
-		if (!width || width === 0) {
-			width = this.screenWidth * this.maxWidthFactor;
-		}
-
-		if (!height || height === 0) {
-			height = this.screenHeight * this.maxHeightFactor;
-		}
-
-		// If given, we want the optimal size
-		if ( offsetElement )
-		{
-			offsetElement = $(offsetElement);
-       		offsetElement.css({
-       			position: 'fixed',
-       			visibility: 'hidden',
-       			width: 'auto',
-       			height: 'auto'
-       		});
-    		
-    		height = $(offsetElement).height();
-    		width = $(offsetElement).width();
-
-       		offsetElement.css({
-       			position: '',
-       			visibility: 'visible',
-       		});
-		}
-
-		width = parseFloat(width);
-		height = parseFloat(height);
-		offsetHeight = typeof offsetHeight == "undefined" || isNaN(parseFloat(offsetHeight)) ? 0 : parseFloat(offsetHeight); // may be undefined
-		var ratio = width / height;
-
-		height += offsetHeight;
-
-		if (height > (this.screenHeight * 0.99) - 60) {
-			height = (this.screenHeight * 0.99) - 60;
-
-			if (this.isImage) { // If this is an image we will have to fix the size
-				width = (height - offsetHeight) * ratio;
-			} else {
-				width += 20; // For the scroller Bar that will apear;
-			}
-		}
-
-		if (width > (this.screenWidth * 0.99) - 40) {
-			width = (this.screenWidth * 0.99) - 40;
-
-			if (this.isImage) { // If Image is defined then we will have to fix it
-				height = (width / ratio) + offsetHeight;
-			}
-		}
-
-		this.endWidth = width + (this.isImage ? 0 : 24); // 24 Px for padding + Border if is Image
-		this.endHeight = height;
-
-		var xOffset = $(document).scrollLeft() || 0;
-		var yOffset = $(document).scrollTop() || 0;
-
-		this.endMarginTop = (this.screenHeight - height) * 0.5 + yOffset;
-		if (this.endMarginTop < 5) {
-			this.endMarginTop = 5;
-		}
-
-		this.endMarginLeft = (this.screenWidth - width) * 0.5 + xOffset;
-		this.setSize();
-		if ( !$('#popupviewer_loader_div').size() > 0 ) this.addNextAndPrevious();
-	};
-
-	this.setSize = function() {
-
-		$(this.contentDiv).css({
-			'width' : this.endWidth,
-			'height' : !this.isImage ? this.endHeight : 'auto'
-		});
-
-		$(this.controlDiv).css({
-			'top'   : this.endMarginTop,
-			'left'  : this.endMarginLeft,
-		});
-	};
-
-	this.addNextAndPrevious = function() {
-
-		// If not already defined, do so now
-		if (!this.popupImageStack) {
-			this.popupImageStack = $(document).find('img.popupimage');
-		}
-
-		if (this.popupImageStack && this.popupImageStack.length > 1) {
-
-			var previousImage = document.createElement('a');
-			previousImage.id = 'popupviewer_control_prevoiusImage';
-
-			var nextImage = document.createElement('a');
-			nextImage.id = 'popupviewer_control_nextImage';
-
-			var selfNAP = this;
-			var skipEvent = function(event) { /* To be implemented */
-
-				if (!event) {
-					var event = window.event;
-				}
-
-				var target = ((event.target) ? event.target : event.srcElement).id.indexOf("next") > 0 ? 1 : -1;
-				selfNAP.skipToImage(target);
-			};
-
-			// If this is not the last image - set inactive
-			if (!this.getLast()) {
-				$(nextImage).click(skipEvent);
-			} else {
-				nextImage.className = "inactive";
-			}
-
-			// If this is not the first image - set inactive
-			if (!this.getFirst()) {
-				$(previousImage).click(skipEvent);
-			} else {
-				previousImage.className = "inactive";
-			}
-
-			if ( $('#'+nextImage.id).size() > 0 ) { $('#'+nextImage.id).remove(); }
-			if ( $('#'+previousImage.id).size() > 0 ) { $('#'+previousImage.id).remove(); }
+		_.popupImageStack = null;
+		
+		_.log = function(message) {
+			console.log(message);	
+		};
+		
+		_.showViewer = function() {
 			
-			this.controlDiv.appendChild(nextImage);
-			this.controlDiv.appendChild(previousImage);
-		}
-	};
+			if ( viewer == null ) {
+				
+				viewer = $('<div id="popupviewer"/>').click(_.hideViewer).appendTo('body');
+				content = $('<div class="content"/>').click(function(e){e.stopPropagation()});
+				content.current = $();
 
-	this.getIntValue = function(value) {
-		return parseInt(value.substr(0, value.indexOf('px')), 10);
-	};
+				additionalContent = $('<div class="additionalContent dokuwiki"/>');
+				viewerIsFixed = viewer.css('position');
 
-	this.buildViewerWithLoader = function() {
-
-		this.removeOldViewer();
-		this.contentDiv = document.createElement('div');
-		this.contentDiv.id = 'popupviewer_content';
-		this.contentDiv.className = 'isImage';
-
-		this.controlDiv = document.createElement('div');
-		this.controlDiv.id = 'popupviewer_control';
-
-		this.controlDiv.appendChild(this.contentDiv);
-
-		var loaderDiv = document.createElement('div');
-		loaderDiv.id = 'popupviewer_loader_div';
-
-		this.contentDiv.appendChild(loaderDiv);
-
-		var closeImage = document.createElement('a');
-		closeImage.id = 'popupviewer_control_closeImage';
-
-		this.controlDiv.appendChild(closeImage);
-
-		var sampleDiv = document.createElement('div');
-		sampleDiv.id = 'popupviewer';
-
-		var overlayDiv = document.createElement('div');
-		overlayDiv.id = 'popupviewer_overlay';
-
-		overlayDiv.style.height = (document.body.offsetHeight -1 ) + 'px';
-		overlayDiv.style.width = (document.body.offsetWidth -1 ) + 'px';
-
-		sampleDiv.appendChild(overlayDiv);
-
-		/* IE 6 Crasher */
-		sampleDiv.appendChild(this.controlDiv);
-
-		$(overlayDiv).click(self.removeOldViewer);
-		$(closeImage).click(self.removeOldViewer);
-		$(document).bind('keydown', self.globalEvent);
-
-		// window.scrollTo(0, 0);
-		document.getElementsByTagName('body')[0].style.overflow = 'hidden';
-		document.getElementsByTagName('body')[0].appendChild(sampleDiv);
-
-		this.setContentSize(210, 20);
-	};
-
-	this.removeOldViewer = function()
-	{
-		if ($('#popupviewer').size() > 0) {
-			$('#popupviewer').remove();
-			$(document).unbind('keydown', self.globalEvent);
-		}
-		document.getElementsByTagName('body')[0].style.overflow = 'auto';
-	};
-
-	this.displayContent = function(showContent, isImage, width, height) {
-
-		this.isImage = isImage;
-
-		if (!$('#popupviewer').size() > 0) {
-			this.buildViewerWithLoader();
-		}
-		if (!showContent || showContent === null) {
-			if (typeof (showContent) != 'undefined') {
-				this.setContentSize(width, height);
+				$('<div class="controls"/>').
+					append(content).
+					append(additionalContent).
+					append(previous = $('<a class="previous"/>').click({'direction': -1}, _.skipImageInDirection)).
+					append(next = $('<a class="next"/>').click({'direction': 1}, _.skipImageInDirection)).
+					append($('<a class="close"/>').click(_.hideViewer)).
+					appendTo(viewer);
+					
+				$(document).keydown(_.globalKeyHandler);
+				
 			}
-			return this;
-		}
-
-		if (isImage) {
-
-			var img = new Image();
-			img.src = showContent;
-			img.className = "imageContent";
-
-			if (this.event) {
-				var elem = (this.event.target) ? this.event.target : this.event.srcElement;
-				this.page = elem.id;
-			}
-
-			var check = new checkImageRoutine(img);
-			var selfIR = this;
-			var callback = {
-
-				image : img,
-				error : function() {
-					selfIR.removeOldViewer();
-				},
-				finalize : function() {
-
-					// var height = this.image.height;
-					var selfCallback = this;
-
-					// self.setContentSize(this.image.width, height, true);
-					var callback = function(response) {
-
-						var container = document.createElement('div');
-						container.className = 'additionalContent dokuwiki';
-						container.innerHTML = response;
-
-						$('#popupviewer_loader_div').remove();
-						$('#popupviewer_content').append(selfCallback.image);
-						selfIR.contentDiv.className = 'dokuwiki';
-						selfIR.contentDiv.className = 'isImage';
-						$('#popupviewer_content').append(container);
-
-						selfIR.setContentSize(selfCallback.image.offsetWidth,selfCallback.image.offsetHeight,container.offsetHeight);
-						$(selfCallback.image).css({
-							'width':self.endWidth,
-							'height':self.endHeight,
-						})
-					};
-
-					var errorCallback = function() {
-						$('#popupviewer_loader_div').remove();
-						$('#popupviewer_content').append(selfCallback.image);
-						selfIR.contentDiv.className = 'dokuwiki';
-						selfIR.contentDiv.className = 'isImage';
-
-						selfIR.setContentSize(selfCallback.image.offsetWidth, selfCallback.image.offsetHeight);
-						$(selfCallback.image).css({
-							'width':selfIR.endWidth,
-							'height':selfIR.endHeight,
-						})
-
-					};
-
-					if (selfIR.additionalContent) {
-						callback(selfIR.additionalContent);
-					} else {
-						selfIR.runAJAX(callback, {
-							'call' : '_popup_load_image_meta',
-							'id' : selfIR.additionalContentID
-						}, errorCallback);
-					}
-
-				}
-			};
-
-			check.checkLoadImage(50, callback);
-		} else {
-			this.contentDiv.className = 'dokuwiki';
-			this.contentDiv.innerHTML = showContent;
 			
-			var images = $(this.contentDiv).find('img').each(function(){
-				(new checkImageRoutine(this)).checkLoadImage(50, {
-					finalize: function() {
-						self.setContentSize(width, height, null, self.contentDiv);
+			content.empty();
+			additionalContent.empty();
+			$('body').css('overflow', 'hidden');
+			viewer.show();
+			return _;
+		};
+		
+		_.hideViewer = function(e, finalFunction) {
+			if ( viewer != null ) {
+				$('body').css('overflow', 'auto');
+
+				additionalContent.animate({
+					opacity: 0,
+					height: 0
+				});
+
+				content.animate({
+					width : 208,
+					height : 13,
+				}).parent('.controls').animate({
+					top : '50%',
+					left : '50%',
+					'margin-left' : -104
+				}).parent('#popupviewer').animate({
+					opacity: finalFunction ? 1 : 0
+				}, function(){
+					viewer.hide();
+
+					content.empty();
+					additionalContent.empty();
+					content.current = null;
+					
+					additionalContent.css({
+						opacity: 1,
+						height: ''
+					});
+	
+					content.css({
+						width : '',
+						height : '',
+					}).parent('.controls').css({
+						top : '',
+						left : '',
+						'margin-left' : ''
+					}).parent('#popupviewer').css({
+						opacity : 1
+					});
+					
+					if ( typeof finalFunction == 'function' ) {
+						finalFunction();
 					}
 				});
-			});
-			
-			this.setContentSize(width, height, null, this.contentDiv);
-		}
-	};
-
-	this.linkReplacer = function(matches, depth) {
-
-		var schema = matches[1];
-		var urlpart = matches[2];
-
-		if (urlpart.match(/^#(.*?)$/)) {
-			// ScrollToDiv
-			urlpart += "\" onclick=\"if(!event){var event=window.event;}if(event){event.cancelBubble=true;event.returnValue=false;}if(event&&event.stopPropagation){event.stopPropagation();}if(event&&event.preventDefault){event.preventDefault();}jQuery('#popupviewer_content').scrollTop=jQuery('#"
-					+ ((urlpart == "#") ? "popupviewer_content" : urlpart
-							.substr(1)) + "').offsetTop;return false;";
-		} else if (!urlpart.match(new RegExp("^(https?:\/\/|mailto:|"
-				+ escape(DOKU_BASE) + ")"))) {
-			urlpart = depth + urlpart;
-		}
-
-		return schema + '="' + urlpart + '"';
-	};
-
-	this.callback = function(data) {
-
-		/* Reset Init Events */
-		window.oninit = function() {
-		};
-
-		/* check for script to be executed */
-		var script = "";
-		if (typeof data == "string" && data !== '') {
-			data = data.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi,
-					function() {
-						if (data !== null) {
-							script += arguments[1].replace(new RegExp("(<!--\/\/--><!\\[CDATA\\[\/\/><!--|\/\/--><!\\]\\]>)", "gi"), "") + '\n';
-						}
-						return '';
-					});
-
-		}
-	
-		try {
-			data = self.preg_replace_callback( '/(href|src|action)="([^"]*)"/ig', self.linkReplacer, data);
-			self.displayContent(data, false, self.endWidth, self.endHeight);
-		} catch (e) {
-			alert(e);
-			return self.removeOldViewer();
-		}
-		try {
-			eval(script + "window.oninit();");
-		} catch (scriptE) {
-			alert("A script error occurred in PopUpViewer. This problem may not be as problematic and the site will run fine. But please get in contact with the sites owner and tell them what you did.\n\n" + scriptE);
-		}
-	};
-
-	// lets try iframe on an error
-	// This relies on the postMessage function of newer browsers
-	// and needs: if ( typeof parent != 'undefined' && parent.postMessage) {
-	// parent.postMessage(document.body.scrollHeight, '*'); }
-	// on the onload function of the loaded pages body.
-	this.errorCallback = function(successaction) {
-
-		// Build Frame
-		var iframe = document.createElement("iframe");
-		iframe.id = "__contentIFrame";
-		iframe.name = "__contentIFrame";
-		iframe.setAttribute('scrolling', 'no');
-		iframe.style.display = "none";
-
-		var finished = false;
-		var messageFunction = function(event) {
-
-			finished = true;
-			var data = event.data || event.originalEvent.data;
-			// If this message does not come with what we want, discard it.
-			if ((typeof data).toLowerCase() == "string" || !data.message
-					|| data.message != 'frameContent') {
-				alert("Could not load page via popupviewer. The page responded with a wrong message.");
-				return;
 			}
 			
-			successaction(data.body);
-
-			$(iframe).remove();
-
-			// Clear the window Event after we are done!
-			$(window).unbind("message", messageFunction);
+			return _;
 		};
-
-		// load event for the iframe to display the content
-		$(iframe).bind('load', function() {
-
-			// Check If we can send a postMessage
-			if (iframe.contentWindow.postMessage) {
-
-				// Register the Message Event for PostMessage receival
-				$(window).bind("message", messageFunction);
-
-				// Send a message
-				var message = "getFrameContent";
-				iframe.contentWindow.postMessage(message, "*");
-			}
-		});
-
-		window.setTimeout(function() {
-			if (!finished) {
-				$(iframe).remove();
-				alert("Could not load page via popupviewer. The page is not available.");
-			}
-		}, 30000);
-
-		iframe.src = self.page;
-		document.getElementsByTagName('body')[0].appendChild(iframe);
-	};
-
-	this.loadAndDisplayPage = function(page, width, height, id, params) {
-
-		if (self.event) {
-			var elem = (self.event.target) ? self.event.target : self.event.srcElement;
-			self.page = elem.href == page ? elem.getAttribute('href') : "";
-		}
-
-		self.endWidth = width;
-		self.endHeight = height;
-
-		// Set custom params
-		if ( (typeof params).toLowerCase() != "object" ) { params = {}; }
-		if ( !params.call ) { params.call = '_popup_load_file'; }
-		if ( !params.id ) { params.id = id; }
-		this.runAJAX(self.callback, params, self.errorCallback);
-	};
-	
-	this.globalEvent = function(e) {
 		
-		e = e||window.event;
-		
-		if ( e.keyCode ) {
-			switch( e.keyCode ) {
+		_.globalKeyHandler = function(e) {
+			
+			if ( !viewer.is(":visible") ) return;
+			
+			switch(e.keyCode) {
 				case 39: // Right
-					if ( $('#popupviewer_control_nextImage').size() > 0 && !self.getLast() ) {
-						self.dispatchClick($('popupviewer_control_nextImage'));
-					}
+					e.stopPropagation();
+					next.click();
 					break;
 				case 37: // Left
-					if ( $('#popupviewer_control_prevoiusImage').size() > 0 && !self.getFirst() ) {
-						self.dispatchClick($('#popupviewer_control_prevoiusImage'));
-					}
+					e.stopPropagation();
+					previous.click();
 					break;
 				case 27: // Escape
-					self.removeOldViewer();
+					e.stopPropagation();
+					_.hideViewer();
 					break;
 			}
-		}
-		return;
-	};
-
-	this.runAJAX = function(callback, options, errorCallback, url) {
-
-		var trackLink = url;
-		if (typeof url == "undefined") {
-			url = DOKU_BASE + 'lib/exe/ajax.php';
-		}
-
-		var success = function (data) {
+		};
+	
+		_.clickHandler = function(e, popupData) {
+			e && e.preventDefault();
+			_.showViewer();
 			
-			// Google Ping
-			if ( typeof googleanalytics_trackLink != "undefined" ) {
-				googleanalytics_trackLink(trackLink);
-			}
-			if ( typeof callback == "function" ) {
-    			callback(data);
-			}
-		};
+			popupData = popupData || this.popupData; // Either as param or from object
+			content.current = $(this);
+			
+			_.log(popupData);
+			
+			if ( popupData.isImage ) {
+				
+				// Load image routine
+				_.log("loading an image");
+				popupData.call = '_popup_load_image_meta';
+				$(new Image()).attr('src', popupData.src || this.href).waitForImages(function(){
 
-		$('#popupviewer_content').load(url, options, function( response, status, xhr ) {
-		
-			if ( status == "error" ) {
-				// Retry
-				errorCallback(success);
+					var image = $(this);
+
+					var wrapper = $('<div/>').load(BASE_URL, popupData, function() {
+						
+						// Force size for the moment
+						content.css({
+							width: content.width(),
+							height: content.height(),
+							overflow: 'hidden'
+						})
+	
+						content.append(image);
+						content.popupData = popupData;
+	
+						additionalContent.html(wrapper.html());
+						_.setContentSizeAndPosition(popupData.width, popupData.height, additionalContent.innerHeight(), image);
+					});
+				});
+				
 			} else {
-				success(response);
+				
+				popupData.call = '_popup_load_file';
+				var wrapper = $('<div/>').load(BASE_URL + " div.dokuwiki", popupData, function(response, status, xhr) {
+
+					var success = function(node)
+					{
+						node.find('body,div.dokuwiki').first().waitForImages({
+							finished: function() {
+						
+							// Force size for the moment
+							content.css({
+								width: content.width(),
+								height: content.height()
+							})
+
+							node.find('[href],[src],[action]').
+							extend(node.filter('[href],[src],[action]')).
+							each(function(){
+								// Replace all event handler
+								
+								if ( this.getAttribute('popupviewerdata') ) {
+									this.popupData = $.parseJSON(this.getAttribute('popupviewerdata'));
+									this.removeAttribute('popupviewerdata');
+								} else {
+									this.popupData = popupData;
+									this.popupData.id = '';
+								}
+								
+								$(this).click(_.clickHandler);									
+							});
+
+							// Check for Javascript to execute
+							var script = "";
+							node.find('script').
+							extend(node.filter('script')).
+							each(function(){
+								script += $(this).text() /*.replace(new RegExp("(<!--\/\/--><!\\[CDATA\\[\/\/><!--|\/\/--><!\\]\\]>)", "gi"), "")*/ + "\n";
+							})
+							
+							try {
+								eval(script); // This might be a problem!
+							} catch(scriptError) {
+								alert("A script error occurred in PopUpViewer. This problem may not be as problematic and the site will run fine. But please get in contact with the sites owner and tell them what you did.\n\n" + scriptError);
+							}
+
+							content.html(this);
+							_.setContentSizeAndPosition(popupData.width, popupData.height, null, content, true);
+
+						}, waitForAll: true});
+					}
+				
+				
+					if ( status == "error") {
+						// Go for an iframe
+						var finished = false;
+						var iframe = null;
+						
+						var messageFunction = function(event) {
+				
+							finished = true;
+							var data = event.data || event.originalEvent.data;
+							// If this message does not come with what we want, discard it.
+							if ((typeof data).toLowerCase() == "string" || !data.message
+									|| data.message != 'frameContent') {
+								alert("Could not load page via popupviewer. The page responded with a wrong message.");
+								return;
+							}
+				
+							iframe.remove();
+
+							// Clear the window Event after we are done!
+							$(window).unbind("message", messageFunction);
+
+							success($(data.body));
+						};
+						
+						iframe = $('<iframe/>').load(function(){
+
+							var frame = iframe.get(0);
+							if ( frame.contentWindow.postMessage ) {
+							
+								// Register the Message Event for PostMessage receival
+								$(window).bind("message", messageFunction);
+								
+								// Send a message
+								var message = "getFrameContent";
+								frame.contentWindow.postMessage(message, "*");
+							}
+							
+						}).hide().attr('src', _.getCurrentLocation() ).appendTo('body');
+						
+						window.setTimeout(function() {
+							if (!finished) {
+								iframe.remove();
+								alert("Could not load page via popupviewer. The page is not available.");
+							}
+						}, 30000);
+						
+					} else {
+						success(wrapper)
+					}
+
+				});
 			}
+		};
 		
-		});
+		_.getCurrentLocation = function() {
+			return content.current.attr('href') || content.current.attr('src') || content.current.attr('action');
+		};
+		
+		_.setContentSizeAndPosition = function(width, height, additionalHeight, offsetElement, isPageContent) {
+		
+			if ( offsetElement && !width && !height) {
+			
+				var prevWidth = content.width();
+				var prevHeight = content.height();
+			
+				offsetElement.css({width:'', height: ''});
+				
+				width = offsetElement.width();
+				height = offsetElement.height(); 
 
-	};
+				// Reset to previous size so the whole thing will animate from the middle
+				offsetElement.css({width:prevWidth, height: prevHeight});
+			}
+			
+			width = parseInt(width) || ($(window).width() * 0.7);
+			height = parseInt(height) || ($(window).height() * 0.8);
+			
+			var ratio = width / height;
+			var maxHeight = ( $(window).height() * 0.99 ) - 60;
+			var maxWidth = ( $(window).width() * 0.99 ) - 40;
+			
+			additionalHeight = additionalHeight || 0;
+			height += additionalHeight;
+			
+			if ( height > maxHeight ) {
+				height = maxHeight;
+				if ( !isPageContent ) { // If this is an image we will have to fix the size
+					width = (height - additionalHeight) * ratio;
+				} else {
+					width += 20; // For the scroller Bar that will apear;
+				}
+			}
+			
+			if ( width > maxWidth ) {
+				width = maxWidth;
+				if ( !isPageContent ) { // If this is an image we will have to fix the size
+					height = width / ratio + additionalHeight;
+				}
+			}
+			
+			var xOffset = viewerIsFixed ? 0 : $(document).scrollLeft() || 0;
+			var yOffset = viewerIsFixed ? 0 : $(document).scrollTop() || 0;
+			
+			yOffset = Math.max(($(window).height() - height) * 0.5 + yOffset, 5);
+			xOffset += ($(window).width() - width) * 0.5;
+			
+			_.log(width + " " + height);
+			_.log(xOffset + " " + yOffset);
+			
+			if ( !isPageContent && offsetElement.is('img') ) {
+				offsetElement.animate({
+					width : width,
+					height : 'auto'
+				});
+				content.css({
+					width : '',
+					height : '',
+					overflow: ''
+				});
 
-	this.preg_replace_callback = function(pattern, callback, subject, limit) {
-		// Perform a regular expression search and replace using a callback
-		// 
-		// discuss at: http://geekfg.net/
-		// + original by: Francois-Guillaume Ribreau (http://fgribreau)
-		// * example 1:
-		// preg_replace_callback("/(\\@[^\\s,\\.]*)/ig",function(matches){return
-		// matches[0].toLowerCase();},'#FollowFriday @FGRibreau @GeekFG',1);
-		// * returns 1: "#FollowFriday @fgribreau @GeekFG"
-		// * example 2:
-		// preg_replace_callback("/(\\@[^\\s,\\.]*)/ig",function(matches){return
-		// matches[0].toLowerCase();},'#FollowFriday @FGRibreau @GeekFG');
-		// * returns 2: "#FollowFriday @fgribreau @geekfg"
-
-		limit = !limit ? -1 : limit;
-
-		var _check = pattern.substr(0, 1), _flag = pattern.substr(pattern
-				.lastIndexOf(_check) + 1), _pattern = pattern.substr(1, pattern
-				.lastIndexOf(_check) - 1), reg = new RegExp(_pattern, _flag), rs = null, res = [], x = 0, list = [], depth = "", ret = subject;
-
-		String.prototype.repeat = function(num) {
-			return new Array(num + 1).join(this);
+			} else {
+				content.animate({
+					width : width,
+					height : isPageContent ? height : 'auto',
+				});
+			}
+			
+			content.parent().animate({
+				top : yOffset,
+				left : xOffset,
+				'margin-left' : 0
+			});
+			
+			if ( isPageContent ) {
+				content.removeClass('isImage');
+			} else {
+				content.addClass('isImage');
+			}
+			
+			_.handleNextAndPrevious();
+			return _;
+		};
+		
+		_.skipImageInDirection = function(e)
+		{
+			e.stopPropagation();
+			
+			var skipTo =  $.inArray(content.current.get(0), _.popupImageStack) + e.data.direction;
+			skipTo = Math.min(_.popupImageStack.length-1, Math.max(skipTo, 0));
+			
+			_.log("skipping " + (e.data.direction < 0 ? 'previous' : 'next') + ' ' + skipTo );
+			return _.skipToImage(skipTo, e.data.direction);
+			
 		};
 
-		// This may generate urls like "../test/../test"
-		if ( !this.page ) { this.page = ""; }
-		depth = this.page.substr(0, this.page.lastIndexOf("/") + 1);
+		_.skipToImage = function(skipTo, inDirection)
+		{
+			if ( !$(_.popupImageStack[skipTo]).is(content.current) ) {
+				_.hideViewer(null, function() {
+					// Deliver extra functionality to clicked item.
+					var nextItem = _.popupImageStack[skipTo];
+					(nextItem.popupData && nextItem.popupData.click && nextItem.popupData.click(skipTo, inDirection)) || $(nextItem).click();
+				});
+			}
+			
+			return _;
+		}
 
-		if (limit === -1) {
-			var tmp = [];
+		_.isFirst = function() {
+			return _.popupImageStack.first().is(content.current);
+		}
 
-			do {
-				tmp = reg.exec(subject);
-				if (tmp !== null) {
-					res.push(tmp);
+		_.isLast = function() {
+			return _.popupImageStack.last().is(content.current);
+		}
+		
+		_.handleNextAndPrevious = function() {
+		
+			if ( _.popupImageStack && _.popupImageStack.length > 1 ) {
+			
+				if ( _.isFirst() ) {
+					previous.addClass('inactive');
+				} else {
+					previous.removeClass('inactive');
 				}
-			} while (tmp !== null && _flag.indexOf('g') !== -1);
-		} else {
-			res.push(reg.exec(subject));
-		}
 
-		for (x = res.length - 1; x > -1; x--) {// explore match
-			if (!list[res[x][0]]) {
-				ret = ret.replace(new RegExp(res[x][0], "g"), callback(res[x],
-						depth));
-				list[res[x][0]] = true;
+				if ( _.isLast() ) {
+					next.addClass('inactive');
+				} else {
+					next.removeClass('inactive');
+				}
+
+				$([next, previous]).removeClass('hidden');
+			} else {
+				$([next, previous]).addClass('hidden');
 			}
-		}
-		return ret;
-	};
+			
+			return _;
+		};
 
-	this.init = function(event) {
-		if (!event) {
-			var event = window.event;
-		}
-		if (event) {
-			event.cancelBubble = true;
-			event.returnValue = false;
-			if (event.stopPropagation) {
-				event.stopPropagation();
-			}
-			if (event.preventDefault) {
-				event.preventDefault();
-			}
-		}
-		this.event = event;
-	};
+		_.init = function(popupImageStack) {
 
-	this.removeOldViewer();
-	this.displayContent(showContent, isImage, width, height);
-};
+			_.popupImageStack = $(popupImageStack || 'a[popupviewerdata]').each(function(){
+				this.popupData = this.popupData || $.parseJSON(this.getAttribute('popupviewerdata'));
+				if (this.removeAttribute) this.removeAttribute('popupviewerdata');
+				$(this).unbind('click').click(_.clickHandler);
+			});
+			
+			return _;
+		};
+	
+	})(popupviewer.prototype);
+	
+    // Namespace all events.
+    var eventNamespace = 'waitForImages';
 
+    // CSS properties which contain references to images.
+    $.waitForImages = {
+        hasImageProperties: ['backgroundImage', 'listStyleImage', 'borderImage', 'borderCornerImage', 'cursor']
+    };
+
+    // Custom selector to find `img` elements that have a valid `src` attribute and have not already loaded.
+    $.expr[':'].uncached = function (obj) {
+        // Ensure we are dealing with an `img` element with a valid `src` attribute.
+        if (!$(obj).is('img[src!=""]')) {
+            return false;
+        }
+
+        // Firefox's `complete` property will always be `true` even if the image has not been downloaded.
+        // Doing it this way works in Firefox.
+        var img = new Image();
+        img.src = obj.src;
+        return !img.complete;
+    };
+
+    $.fn.waitForImages = function (finishedCallback, eachCallback, waitForAll) {
+
+        var allImgsLength = 0;
+        var allImgsLoaded = 0;
+
+        // Handle options object.
+        if ($.isPlainObject(arguments[0])) {
+            waitForAll = arguments[0].waitForAll;
+            eachCallback = arguments[0].each;
+			// This must be last as arguments[0]
+			// is aliased with finishedCallback.
+            finishedCallback = arguments[0].finished;
+        }
+
+        // Handle missing callbacks.
+        finishedCallback = finishedCallback || $.noop;
+        eachCallback = eachCallback || $.noop;
+
+        // Convert waitForAll to Boolean
+        waitForAll = !! waitForAll;
+
+        // Ensure callbacks are functions.
+        if (!$.isFunction(finishedCallback) || !$.isFunction(eachCallback)) {
+            throw new TypeError('An invalid callback was supplied.');
+        }
+
+        return this.each(function () {
+            // Build a list of all imgs, dependent on what images will be considered.
+            var obj = $(this);
+            var allImgs = [];
+            // CSS properties which may contain an image.
+            var hasImgProperties = $.waitForImages.hasImageProperties || [];
+            // To match `url()` references.
+            // Spec: http://www.w3.org/TR/CSS2/syndata.html#value-def-uri
+            var matchUrl = /url\(\s*(['"]?)(.*?)\1\s*\)/g;
+
+            if (waitForAll) {
+
+                // Get all elements (including the original), as any one of them could have a background image.
+                obj.find('*').addBack().each(function () {
+                    var element = $(this);
+
+                    // If an `img` element, add it. But keep iterating in case it has a background image too.
+                    if (element.is('img:uncached')) {
+                        allImgs.push({
+                            src: element.attr('src'),
+                            element: element[0]
+                        });
+                    }
+
+                    $.each(hasImgProperties, function (i, property) {
+                        var propertyValue = element.css(property);
+                        var match;
+
+                        // If it doesn't contain this property, skip.
+                        if (!propertyValue) {
+                            return true;
+                        }
+
+                        // Get all url() of this element.
+                        while (match = matchUrl.exec(propertyValue)) {
+                            allImgs.push({
+                                src: match[2],
+                                element: element[0]
+                            });
+                        }
+                    });
+                });
+            } else {
+                // For images only, the task is simpler.
+                obj.find('img:uncached')
+                    .each(function () {
+                    allImgs.push({
+                        src: this.src,
+                        element: this
+                    });
+                });
+            }
+
+            allImgsLength = allImgs.length;
+            allImgsLoaded = 0;
+
+            // If no images found, don't bother.
+            if (allImgsLength === 0) {
+                finishedCallback.call(obj[0]);
+            }
+
+            $.each(allImgs, function (i, img) {
+
+                var image = new Image();
+
+                // Handle the image loading and error with the same callback.
+                $(image).on('load.' + eventNamespace + ' error.' + eventNamespace, function (event) {
+                    allImgsLoaded++;
+
+                    // If an error occurred with loading the image, set the third argument accordingly.
+                    eachCallback.call(img.element, allImgsLoaded, allImgsLength, event.type == 'load');
+
+                    if (allImgsLoaded == allImgsLength) {
+                        finishedCallback.call(obj[0]);
+                        return false;
+                    }
+
+                });
+
+                image.src = img.src;
+            });
+        });
+    };
+    	
+	$(function(){
+		$.popupviewer().init();
+	});
+	
+})(jQuery);
+
+
+/* Loading the content for locally exported content */
 (function($){
 	$(window).bind("message", function(event){
-		
+
 		var data = event.data || event.originalEvent.data;
 		var source = event.source || event.originalEvent.source;
 		if (data != "getFrameContent") {
@@ -655,82 +586,3 @@ var popupviewer = function(showContent, isImage, width, height) {
 		}
 	});
 })(jQuery);
-
-var checkImageRoutine = function(inputImage) {
-
-	this.image = null;
-	this.counter = 500;
-	this.isFinished = false;
-
-	this.checkImages = function() {
-
-		var isOK = this.isImageOk();
-		if (!isOK && this.counter > 0) {
-			this.counter--;
-			return false;
-		}
-
-		if (isOK) {
-			this.isFinished = true;
-		}
-		return true;
-	};
-
-	this.isImageOk = function(img) {
-
-		if (this.isFinished) {
-			return true;
-		}
-
-		if (!img) {
-			img = this.image;
-		}
-		// During the onload event, IE correctly identifies any images
-		// that weren't downloaded as not complete. Others should too.
-		// Gecko-based browsers act like NS4 in that they imageflow this
-		// incorrectly: they always return true.
-		if (!img.complete) {
-			return false;
-		}
-
-		// However, they do have two very useful properties: naturalWidth
-		// and naturalHeight. These give the true size of the image. If
-		// it failed to load, either of these should be zero.
-		if (typeof img.naturalWidth != "undefined" && img.naturalWidth === 0) {
-			return false;
-		}
-
-		// No other way of checking: assume it's ok.
-		return true;
-	};
-
-	this.checkLoadImage = function(count, callback) {
-
-		if (!count || count === 0) {
-			if (callback && callback.error) {
-				callback.error();
-			}
-			return false;
-		}
-		if (!this.isImageOk()) {
-			var selfCLI = this;
-			setTimeout(function() {
-				selfCLI.checkLoadImage(count - 1, callback);
-			}, 100);
-			return;
-		}
-
-		if (callback && callback.finalize) {
-			callback.finalize();
-		}
-		return true;
-	};
-
-	this.finish = function() {
-		this.counter = 0;
-	};
-
-	this.image = inputImage;
-	this.image.onload = this.finish;
-	this.image.onabord = this.finish;
-};

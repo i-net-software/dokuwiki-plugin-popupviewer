@@ -43,16 +43,7 @@ class syntax_plugin_popupviewer extends DokuWiki_Syntax_Plugin {
         list($name, $title) = explode('%', $name, 2); // find Name and Title
         list($id, $param) = explode('?', $id, 2); // find ID + Params
         list($w, $h) = explode('x', $param, 2); // find Size
-        /*
-        if ( preg_match("/{{[^}]+}}/", $name)) {
-         
-        $displayImage = substr($name, 2, -2); // strip markup
-        $name = array();
-        list($name['id'], $name['name']) = explode('|', $displayImage, 2); // find ID/Params + Name Extension
-        list($name['id'], $name['param']) = explode('?', $name['id'], 2); // find ID + Params
-        list($name['w'], $name['h']) = explode('x', $name['param'], 2); // find Size
-        }
-        */
+
         return array(trim($id), $name, $title, $w, $h, $orig, $close);
     }
 
@@ -67,79 +58,67 @@ class syntax_plugin_popupviewer extends DokuWiki_Syntax_Plugin {
             $exists = @file_exists($file) && @is_file($file);
         }
 
-        if ($mode == 'xhtml') {
+        $scID = sectionID(noNs($id), $renderer->headers);
+        $more = 'id="' . $scID . '"';
+        $script = '';
 
-            $params = ''; $params2 = '';
+        if ( $exists ) {
+            // is Media
 
-            $scID = sectionID(noNs($id), $renderer->headers);
-            $more = 'id="' . $scID . '"';
-            $script = '';
+            $p1 = Doku_Handler_Parse_Media($orig);
 
-            if ( $exists ) {
-                // is Media
+            $p = array();
+            $p['alt'] = $id;
+            $p['class'] = 'popupimage';
+            $p['title'] = $title;
+            $p['id'] = 'popupimage_' . $scID;
+            if ($p1['width']) $p['width'] = $p1['width'];
+            if ($p1['height']) $p['height'] = $p1['height'];
+            if ($p1['title'] && !$p['title']) { $p['title'] = $p1['title']; $p['alt'] = $p1['title']; }
+            if ($p1['align']) $p['class'] .= ' media' . $p1['align'];
 
-                $p1 = Doku_Handler_Parse_Media($orig);
-
-                $p = array();
-                $p['alt'] = $id;
-                $p['class'] = 'popupimage';
-                $p['title'] = $title;
-                $p['id'] = 'popupimage_' . $scID;
-                if ($p1['width']) $p['width'] = $p1['width'];
-                if ($p1['height']) $p['height'] = $p1['height'];
-                if ($p1['title'] && !$p['title']) { $p['title'] = $p1['title']; $p['alt'] = $p1['title']; }
-                if ($p1['align']) $p['class'] .= ' media' . $p1['align'];
-
-                $p2 = buildAttributes($p);
-                if ( empty($name) ) {
-                    $name = '<img src="' . ml($id, array( 'w' => $p['width'], 'h' => $p['height'] ) ) . '" '.$p2.'/>';
-                } else {
-                    $name = trim(p_render($mode, p_get_instructions(trim($name)), $info));
-                    $name = trim(preg_replace("%^(\s|\r|\n)*?<a.+?>(.*)?</a>(\s|\r|\n)*?$%is", "$2", preg_replace("%^(\s|\r|\n)*?<p.*?>(.*)?</p>(\s|\r|\n)*?$%is", "$2", $name)));
-                     
-                    $name = preg_replace("%^(<img.*?class=\")(.*?\")(.*?$)%", "$1popupimage $2 id=\"popupimage_$scID\"$3", $name);
-                }
-
-                list($EXT,$MIME,$DL) = mimetype($id,false);
-                if ( strstr($MIME, "image") ) {
-                    $more = $this->_getOnClickHandler($id, $close, true, "", "");
-                }
-
-                $id = ml($id);
-
+            $p2 = buildAttributes($p);
+            if ( empty($name) ) {
+                $name = '<img src="' . ml($id, array( 'w' => $p['width'], 'h' => $p['height'] ) ) . '" '.$p2.'/>';
             } else {
-                // is Page
-                resolve_pageid(getNS($ID),$id,$exists);
-                if ( empty($name) ) {
-                    $name = htmlspecialchars(noNS($id),ENT_QUOTES,'UTF-8');
-                    if ($conf['useheading'] && $id ) {
-                        $heading = p_get_first_heading($id,true);
-                        if ($heading) {
-                            $name = htmlspecialchars($heading,ENT_QUOTES,'UTF-8');
-                        }
+                $name = trim(p_render($mode, p_get_instructions(trim($name)), $info));
+                $name = trim(preg_replace("%^(\s|\r|\n)*?<a.+?>(.*)?</a>(\s|\r|\n)*?$%is", "$2", preg_replace("%^(\s|\r|\n)*?<p.*?>(.*)?</p>(\s|\r|\n)*?$%is", "$2", $name)));
+                 
+                $name = preg_replace("%^(<img[^>]*?)>%", "$1 id=\"popupimage_$scID\">", $name);
+            }
+
+            $more = $this->_getOnClickHandler($close, array('isImage' => true, 'id' => $id));
+            $id = ml($id);
+
+        } else {
+            // is Page
+            resolve_pageid(getNS($ID),$id,$exists);
+            if ( empty($name) ) {
+                $name = htmlspecialchars(noNS($id),ENT_QUOTES,'UTF-8');
+                if ($conf['useheading'] && $id ) {
+                    $heading = p_get_first_heading($id,true);
+                    if ($heading) {
+                        $name = htmlspecialchars($heading,ENT_QUOTES,'UTF-8');
                     }
-                } else {
-                    $name = trim(p_render($mode, p_get_instructions(trim($name)), $info));
                 }
-
-                list($params, $params2) = $this->_getWidthHeightParams($w, $h);
-
-                // Add ID for AJAX - this.href for offline versions
-                $more = $this->_getOnClickHandler($id, $close, false, $params, $params2);
-                $id=wl($id);
+            } else {
+                $name = trim(p_render($mode, p_get_instructions(trim($name)), $info));
             }
 
-            $renderer->doc .= $this->_renderFinalPopupImage($id, $exists, $more, $name, $isImageMap, $script);
+			$data = array(
+				'width' => $w,
+				'height' => $h,
+				'id' => $id
+			);
 
-            return true;
-        } else if ( $mode == 'odt' ) {
-            if ( $exists ) { // is Image
-
-                $p1 = Doku_Handler_Parse_Media($orig);
-                $renderer->_odtAddImage(mediaFN($id), $p1['width'], $p1['height'], $p1['align'], $p1['title']);
-            }
+            // Add ID for AJAX - this.href for offline versions
+            $more = $this->_getOnClickHandler($close, $data);
+            $id=wl($id);
         }
-        return false;
+
+        $renderer->doc .= $this->_renderFinalPopupImage($id, $exists, $more, $name, $isImageMap, $script);
+
+        return true;
     }
 
     function _renderFinalPopupImage($id, $exists, $more, $name, $isImageMap, $script, $class='') {
@@ -158,77 +137,12 @@ class syntax_plugin_popupviewer extends DokuWiki_Syntax_Plugin {
         }
     }
 
-    function _getWidthHeightParams($w, $h) {
-        $params = ''; $params2 = '';
-        if ( !empty($w) && intval($w) == $w ) $params2 .= ',\'' . intval($w) . '\'';
-        else {
-            if ( !empty($w) && doubleVal($w) == $w )
-            $params .= 'viewer.maxWidthFactor=' . doubleVal($w) . ';';
-            $params2 .= ',null';
-        }
-
-        if ( !empty($h) && intval($h) == $h ) $params2 .= ',\'' . intval($h) . '\'';
-        else {
-            if ( !empty($h) && doubleVal($h) == $h )
-            $params .= 'viewer.maxHeightFactor=' . doubleVal($h) . ';';
-            $params2 .= ',null';
-        }
-
-        return array($params, $params2);
-    }
-
-    function _getOnClickHandler($id, $close, $isImage, $params, $params2, $params3='') {
+    function _getOnClickHandler($close, $data=array()) {
         if ( !$close ) {
-            if ( $isImage ) {
-                return ' onclick="var viewer=new popupviewer();viewer.init(event);viewer.additionalContentID=\'' . $id . '\';viewer.displayContent(this.href, 1);return false;"';
-            }
-            $params2 .= ",'$id'";
-            if ( !empty($params3) ) {
-                $params2 .= ", { $params3 }";
-            }
-            return ' onclick="var viewer=new popupviewer();viewer.init(event);if(viewer.loadAndDisplayPage){' . $params . 'viewer.loadAndDisplayPage(this.href' . $params2 .');}return false;"';
+            return ' popupviewerdata="' . htmlentities(json_encode(array_filter($data))) . '"';
         } else {
-            return ' onclick="var viewer=new popupviewer(); viewer.removeOldViewer(); return false;"';
+            return ' popupviewerclose';
         }
     }
-
-    function __getTitleAndCaption($mediaID) {
-
-        $title = "";
-        $caption = "";
-        require_once(DOKU_INC.'inc/JpegMeta.php');
-        if ( $meta = new JpegMeta(mediaFN($mediaID))) {
-            $meta->_parseAll();
-            $title = $meta->getField('Iptc.Headline');
-            $caption = $meta->getField('Iptc.Caption');
-        }
-
-        return array($title, $caption);
-    }
-
-    function convertToImageMapArea($imagemap, $data, $pos) {
-
-        list($id, $name, $title, $w, $h, $orig, $close) = $data;
-
-        if ( !preg_match('/^(.*)@([^@]+)$/u', array_pop(explode('|', $name)), $match)) {
-            return;
-        }
-        
-        $coords = explode(',',$match[2]);
-        if (count($coords) == 3) {
-            $shape = 'circle';
-        } elseif (count($coords) == 4) {
-            $shape = 'rect';
-        } elseif (count($coords) >= 6) {
-            $shape = 'poly';
-        } else {
-            return;
-        }
-        
-        $coords = array_map('trim', $coords);
-        $name = trim($match[1]);
-        $imagemap->CallWriter->writeCall(array('plugin', array('popupviewer', array($id, $name, $title, $w, $h, $orig, $close, array('shape' => $shape, 'coords' => join(',',$coords))), DOKU_LEXER_MATCHED), $pos));
-    }
-
 }
 // vim:ts=4:sw=4:et:enc=utf-8:

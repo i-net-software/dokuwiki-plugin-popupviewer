@@ -50,11 +50,10 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
 
         $event->preventDefault();
         $event->stopPropagation();
-        $ID = cleanID(str_replace(wl('', null, true), '', $_REQUEST['id']));
-        $ID = cleanID($_REQUEST['id']);
 
         $data = "";
         $head = array();
+		$ID = getID('id');
 
         switch($event->data) {
             case '_popup_load_file' :
@@ -70,16 +69,15 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
                 $data = '<div class="dokuwiki" style="padding-bottom: 10px;">' . p_wiki_xhtml($ID,'',true) . '</div>';
                 break;
             case '_popup_load_image_meta' :
-                @require_once(DOKU_INC.'inc/JpegMeta.php');
-                if ( $meta = new JpegMeta(mediaFN($ID))) {
-                    $meta->_parseAll();
-                    $title = $meta->getField('Iptc.Headline');
-                    $caption = $meta->getField('Iptc.Caption');
 
-                    if ( !empty($title) ) { $title = "<h3 class=\"title\">$title</h3>"; }
-                    if ( !empty($caption) ) { $caption = "<div  class=\"text\"><p>$caption</p></div>"; }
-                    $data = preg_replace("%(\n|\r)%", '', nl2br($title.$caption));
-                }
+				global $SRC;
+				$SRC = mediaFN($ID);
+                $title = hsc(tpl_img_getTag('IPTC.Headline'));
+                $caption = hsc(tpl_img_getTag('IPTC.Caption'));
+
+                if ( !empty($title) ) { $title = "<h3 class=\"title\">$title</h3>"; }
+                if ( !empty($caption) ) { $caption = "<div class=\"text\"><p>$caption</p></div>"; }
+                $data = preg_replace("%(\n|\r)%", '', nl2br($title.$caption));
                 break;
         }
 
