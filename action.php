@@ -63,8 +63,14 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
                 $JSINFO['namespace'] = (string) $INFO['namespace'];
                 trigger_event('POPUPVIEWER_DOKUWIKI_STARTED',$head,null,true);
 
-                $script = 'var JSINFO = '.$json->encode($JSINFO).'; ';
-                $head['script'][] = array( 'type'=>'text/javascript', '_data'=> $script);
+                $script = 'var JSINFO = '.$json->encode($JSINFO).';';
+                $meta = p_get_metadata($ID, 'popupscript', true);
+                
+                foreach($meta as $popupscript) {
+	                $script .= "try{(function($){".$popupscript."}(jQuery))}catch(e){alert('Could not execute popupscript: '+e);}";
+                }
+
+                $head['popupscript'][] = array( 'type'=>'text/javascript', '_data'=> $script);
 
                 $data = '<div class="dokuwiki" style="padding-bottom: 10px;">' . p_wiki_xhtml($ID,'',true) . '</div>';
                 break;
