@@ -42,7 +42,7 @@
 					append(additionalContent).
 					append(previous = $('<a class="previous"/>').click({'direction': -1}, _.skipImageInDirection)).
 					append(next = $('<a class="next"/>').click({'direction': 1}, _.skipImageInDirection)).
-					append($('<a class="close"/>').click(_.hideViewer)).
+					append($('<a class="close"/>').addClass('visible').click(_.hideViewer)).
 					appendTo(viewer);
 					
 				$(document).keydown(_.globalKeyHandler);
@@ -85,7 +85,7 @@
 						opacity: 1,
 						height: ''
 					});
-	
+					
 					content.css({
 						width : '',
 						height : '',
@@ -96,9 +96,9 @@
 					}).parent('#popupviewer').css({
 						opacity : 1
 					});
-					
+										
 					if ( typeof finalFunction == 'function' ) {
-						finalFunction();
+						finalFunction(e);
 					}
 				});
 			}
@@ -127,10 +127,13 @@
 		};
 	
 		_.clickHandler = function(e, popupData) {
+
+			popupData = popupData || this.popupData || e.target.popupData; // Either as param or from object
+			if ( !popupData ) { return; }
+
 			e && e.preventDefault();
 			_.showViewer();
-			
-			popupData = popupData || this.popupData; // Either as param or from object
+
 			content.current = $(this);
 			
 			_.log(popupData);
@@ -139,7 +142,7 @@
 				
 				// Load image routine
 				_.log("loading an image");
-				popupData.call = '_popup_load_image_meta';
+				popupData.call = popupData.call || '_popup_load_image_meta';
 				$(new Image()).attr('src', popupData.src || this.href).waitForImages(function(){
 
 					var image = $(this);
@@ -154,7 +157,7 @@
 						})
 	
 						content.append(image);
-						content.popupData = popupData;
+						content.popupData = jQuery.extend(true, {}, popupData);
 	
 						additionalContent.html(wrapper.html());
 						_.setContentSizeAndPosition(popupData.width, popupData.height, additionalContent.innerHeight(), image);
@@ -163,12 +166,13 @@
 				
 			} else {
 				
-				popupData.call = '_popup_load_file';
-				var wrapper = $('<div/>').load(BASE_URL + " div.dokuwiki", popupData, function(response, status, xhr) {
+				popupData.call = popupData.call || '_popup_load_file';
+				popupData.src = popupData.src || BASE_URL;
+				var wrapper = $('<div/>').load(popupData.src, popupData, function(response, status, xhr) {
 
 					var success = function(node)
 					{
-						node.find('body,div.dokuwiki').first().waitForImages({
+						node.find('div.dokuwiki,body').first().waitForImages({
 							finished: function() {
 						
 							// Force size for the moment
@@ -177,37 +181,60 @@
 								height: content.height()
 							})
 
-							node.find('[href],[src],[action]').
-							extend(node.filter('[href],[src],[action]')).
+							node.find('a[href],form[action]').
 							each(function(){
 								// Replace all event handler
+								
+								var element = $(this);
+								
+								urlpart = element.attr('href') || element.attr('action') || "";
+								if ( urlpart.match(new RegExp("^#.*?$")) ) {
+									// Scroll to anchor
+									element.click(function(){
+										content.get(0).scrollTop( urlpart == '#' ? 0 : $(urlpart).offset().top);
+									});
+								}
 								
 								if ( this.getAttribute('popupviewerdata') ) {
 									this.popupData = $.parseJSON(this.getAttribute('popupviewerdata'));
 									this.removeAttribute('popupviewerdata');
 								} else {
-									this.popupData = popupData;
-									this.popupData.id = '';
+									this.popupData = jQuery.extend(true, {}, popupData);
+									this.popupData.src = urlpart;
+									delete(this.popupData.id); // or it will always load this file.
 								}
 								
-								$(this).click(_.clickHandler);									
+								$(this).bind('click', function(e){
+									e.stopPropagation(); e.preventDefault();
+									_.hideViewer(e, _.clickHandler);
+								});
 							});
+
+							content.html(this);
 
 							// Check for Javascript to execute
 							var script = "";
-							node.find('script').
-							extend(node.filter('script')).
-							each(function(){
-								script += $(this).text() /*.replace(new RegExp("(<!--\/\/--><!\\[CDATA\\[\/\/><!--|\/\/--><!\\]\\]>)", "gi"), "")*/ + "\n";
+							node.find('popupscript').
+							each(function() {
+								script += (this.innerHTML || this.innerText);
 							})
-							
-							try {
-								eval(script); // This might be a problem!
-							} catch(scriptError) {
-								alert("A script error occurred in PopUpViewer. This problem may not be as problematic and the site will run fine. But please get in contact with the sites owner and tell them what you did.\n\n" + scriptError);
+
+							var newContext = "jQuery.noConflict(); containerContext = this; ___ = function( selector, context ){return new jQuery.fn.init(selector,context||containerContext);}; ___.fn = ___.prototype = jQuery.fn;jQuery.extend( ___, jQuery );jQuery = ___;\n"
+
+							if ( script.length > 0 ) {
+								var randomID = Math.ceil(Math.random()*1000000);
+								content.attr('id', randomID);
+
+								var newContext = "jQuery.noConflict(); containerContext = this; ___ = function( selector, context ){return new jQuery.fn.init(selector,context||containerContext);}; ___.fn = ___.prototype = jQuery.fn;jQuery.extend( ___, jQuery );jQuery = ___;\n"
+								
+								try{
+									$.globalEval("try{\n(function(){\n"+newContext+script+"\n}).call(jQuery('div#"+randomID+"').get(0));\n}catch(e){}\n//");
+								} catch (e) {
+									_.log("Exception!");
+									_.log(e);
+								}
 							}
 
-							content.html(this);
 							_.setContentSizeAndPosition(popupData.width, popupData.height, null, content, true);
 
 						}, waitForAll: true});
@@ -353,7 +380,7 @@
 				content.addClass('isImage');
 			}
 			
-			_.handleNextAndPrevious();
+			_.handleNextAndPrevious(!isPageContent);
 			return _;
 		};
 		
@@ -361,12 +388,13 @@
 		{
 			e.stopPropagation();
 			
+			if ( !$(this).is(':visible') ) { return; }
+			
 			var skipTo =  $.inArray(content.current.get(0), _.popupImageStack) + e.data.direction;
 			skipTo = Math.min(_.popupImageStack.length-1, Math.max(skipTo, 0));
 			
 			_.log("skipping " + (e.data.direction < 0 ? 'previous' : 'next') + ' ' + skipTo );
 			return _.skipToImage(skipTo, e.data.direction);
-			
 		};
 
 		_.skipToImage = function(skipTo, inDirection)
@@ -390,9 +418,9 @@
 			return _.popupImageStack.last().is(content.current);
 		}
 		
-		_.handleNextAndPrevious = function() {
+		_.handleNextAndPrevious = function(currentIsImage) {
 		
-			if ( _.popupImageStack && _.popupImageStack.length > 1 ) {
+			if ( currentIsImage && _.popupImageStack && _.popupImageStack.length > 1) {
 			
 				if ( _.isFirst() ) {
 					previous.addClass('inactive');
@@ -406,9 +434,11 @@
 					next.removeClass('inactive');
 				}
 
-				$([next, previous]).removeClass('hidden');
+				next.addClass('visible');
+				previous.addClass('visible');
 			} else {
-				$([next, previous]).addClass('hidden');
+				next.removeClass('visible');
+				previous.removeClass('visible');
 			}
 			
 			return _;
@@ -420,6 +450,9 @@
 				this.popupData = this.popupData || $.parseJSON(this.getAttribute('popupviewerdata'));
 				if (this.removeAttribute) this.removeAttribute('popupviewerdata');
 				$(this).unbind('click').click(_.clickHandler);
+			}).filter(function(){
+				// Only images allowed in Stack.
+				return this.popupData.isImage;
 			});
 			
 			return _;
