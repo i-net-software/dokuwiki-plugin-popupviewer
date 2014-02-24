@@ -13,7 +13,7 @@ if (!defined('DOKU_PLUGIN')) define('DOKU_PLUGIN',DOKU_INC.'lib/plugins/');
 
 require_once(DOKU_PLUGIN.'syntax.php');
 
-class syntax_plugin_popupviewer extends DokuWiki_Syntax_Plugin {
+class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
 
     function getInfo(){
         return array_merge(confToHash(dirname(__FILE__).'/plugin.info.txt'), array(
@@ -28,10 +28,10 @@ class syntax_plugin_popupviewer extends DokuWiki_Syntax_Plugin {
 
     function connectTo($mode) {
          
-        $this->Lexer->addSpecialPattern('{{popup>[^}]+}}}}', $mode, 'plugin_popupviewer');
-        $this->Lexer->addSpecialPattern('{{popup>[^}]+}}', $mode, 'plugin_popupviewer');
-        $this->Lexer->addSpecialPattern('{{popupclose>[^}]+}}}}', $mode, 'plugin_popupviewer');
-        $this->Lexer->addSpecialPattern('{{popupclose>[^}]+}}', $mode, 'plugin_popupviewer');
+        $this->Lexer->addSpecialPattern('{{popup>[^}]+}}}}', $mode, 'plugin_popupviewer_viewer');
+        $this->Lexer->addSpecialPattern('{{popup>[^}]+}}', $mode, 'plugin_popupviewer_viewer');
+        $this->Lexer->addSpecialPattern('{{popupclose>[^}]+}}}}', $mode, 'plugin_popupviewer_viewer');
+        $this->Lexer->addSpecialPattern('{{popupclose>[^}]+}}', $mode, 'plugin_popupviewer_viewer');
     }
 
     function handle($match, $state, $pos, &$handler) {
