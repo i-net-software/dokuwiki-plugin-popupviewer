@@ -19,6 +19,7 @@
 		var viewerIsFixed = false;
 		var next = null;
 		var previous = null;
+		var internal = {};
 		
 		_.popupImageStack = null;
 		
@@ -299,20 +300,28 @@
 			return content.current.attr('href') || content.current.attr('src') || content.current.attr('action');
 		};
 		
-		_.setContentSizeAndPosition = function(width, height, additionalHeight, offsetElement, isPageContent) {
+		internal.optimalSize = function(offsetElement) {
+			
+			var prevWidth = content.width();
+			var prevHeight = content.height();
 		
-			if ( offsetElement && !width && !height) {
+			offsetElement.css({width:'', height: ''});
 			
-				var prevWidth = content.width();
-				var prevHeight = content.height();
-			
-				offsetElement.css({width:'', height: ''});
-				
-				width = offsetElement.width();
-				height = offsetElement.height(); 
+			width = offsetElement.width();
+			height = offsetElement.height(); 
 
-				// Reset to previous size so the whole thing will animate from the middle
-				offsetElement.css({width:prevWidth, height: prevHeight});
+			// Reset to previous size so the whole thing will animate from the middle
+			offsetElement.css({width:prevWidth, height: prevHeight});
+			
+			return {width: width, height: height};
+		}
+		
+		_.setContentSizeAndPosition = function(width, height, additionalHeight, offsetElement, isPageContent) {
+
+			if ( offsetElement && !width && !height) {
+				var optimalSize = internal.optimalSize(offsetElement);
+				width = optimalSize.width;
+				height = optimalSize.height; 
 			}
 			
 			width = parseInt(width) || ($(window).width() * 0.7);
@@ -351,10 +360,13 @@
 			_.log(xOffset + " " + yOffset);
 			
 			if ( !isPageContent && offsetElement.is('img') ) {
+
+				var optimalSize = internal.optimalSize(offsetElement);
 				offsetElement.animate({
 					width : width,
-					height : 'auto'
+					height : width / (optimalSize.width/optimalSize.height)
 				});
+				
 				content.css({
 					width : '',
 					height : '',
