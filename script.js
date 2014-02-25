@@ -23,7 +23,7 @@
 		
 		_.popupImageStack = null;
 		
-		_.log = function(message) {
+		internal.log = function(message) {
 			console.log(message);	
 		};
 		
@@ -46,7 +46,7 @@
 					append($('<a class="close"/>').addClass('visible').click(_.hideViewer)).
 					appendTo(viewer);
 					
-				$(document).keydown(_.globalKeyHandler);
+				$(document).keydown(internal.globalKeyHandler);
 				
 			}
 			
@@ -107,7 +107,7 @@
 			return _;
 		};
 		
-		_.globalKeyHandler = function(e) {
+		internal.globalKeyHandler = function(e) {
 			
 			if ( !viewer.is(":visible") ) return;
 			
@@ -137,12 +137,12 @@
 
 			content.current = $(this);
 			
-			_.log(popupData);
+			internal.log(popupData);
 			
 			if ( popupData.isImage ) {
 				
 				// Load image routine
-				_.log("loading an image");
+				internal.log("loading an image");
 				popupData.call = popupData.call || '_popup_load_image_meta';
 				$(new Image()).attr('src', popupData.src || this.href).waitForImages(function(){
 
@@ -161,7 +161,7 @@
 						content.popupData = jQuery.extend(true, {}, popupData);
 	
 						additionalContent.html(wrapper.html());
-						_.setContentSizeAndPosition(popupData.width, popupData.height, additionalContent.innerHeight(), image);
+						_.resizePopup(popupData.width, popupData.height, additionalContent.innerHeight(), image);
 					});
 				});
 				
@@ -231,12 +231,12 @@
 								try{
 									$.globalEval("try{\n(function(){\n"+newContext+script+"\n}).call(jQuery('div#"+randomID+"').get(0));\n}catch(e){}\n//");
 								} catch (e) {
-									_.log("Exception!");
-									_.log(e);
+									internal.log("Exception!");
+									internal.log(e);
 								}
 							}
 
-							_.setContentSizeAndPosition(popupData.width, popupData.height, null, content, true);
+							_.resizePopup(popupData.width, popupData.height, null, content, true);
 
 						}, waitForAll: true});
 					}
@@ -279,7 +279,7 @@
 								frame.contentWindow.postMessage(message, "*");
 							}
 							
-						}).hide().attr('src', _.getCurrentLocation() ).appendTo('body');
+						}).hide().attr('src', internal.getCurrentLocation() ).appendTo('body');
 						
 						window.setTimeout(function() {
 							if (!finished) {
@@ -296,7 +296,7 @@
 			}
 		};
 		
-		_.getCurrentLocation = function() {
+		internal.getCurrentLocation = function() {
 			return content.current.attr('href') || content.current.attr('src') || content.current.attr('action');
 		};
 		
@@ -316,7 +316,7 @@
 			return {width: width, height: height};
 		}
 		
-		_.setContentSizeAndPosition = function(width, height, additionalHeight, offsetElement, isPageContent) {
+		_.resizePopup = function(width, height, additionalHeight, offsetElement, isPageContent) {
 
 			if ( offsetElement && !width && !height) {
 				var optimalSize = internal.optimalSize(offsetElement);
@@ -356,15 +356,14 @@
 			yOffset = Math.max(($(window).height() - height) * 0.5 + yOffset, 5);
 			xOffset += ($(window).width() - width) * 0.5;
 			
-			_.log(width + " " + height);
-			_.log(xOffset + " " + yOffset);
+			internal.log(width + " " + height);
+			internal.log(xOffset + " " + yOffset);
 			
 			if ( !isPageContent && offsetElement.is('img') ) {
 
-				var optimalSize = internal.optimalSize(offsetElement);
 				offsetElement.animate({
 					width : width,
-					height : width / (optimalSize.width/optimalSize.height)
+					height : height - additionalHeight
 				});
 				
 				content.css({
@@ -405,7 +404,7 @@
 			var skipTo =  $.inArray(content.current.get(0), _.popupImageStack) + e.data.direction;
 			skipTo = Math.min(_.popupImageStack.length-1, Math.max(skipTo, 0));
 			
-			_.log("skipping " + (e.data.direction < 0 ? 'previous' : 'next') + ' ' + skipTo );
+			internal.log("skipping " + (e.data.direction < 0 ? 'previous' : 'next') + ' ' + skipTo );
 			return _.skipToImage(skipTo, e.data.direction);
 		};
 
