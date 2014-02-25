@@ -40,15 +40,7 @@ class syntax_plugin_popupviewer_popupscript extends DokuWiki_Syntax_Plugin {
 		global $ID;
 
 		if ( $mode == "metadata" ) {
-		
-			$meta = p_get_metadata($ID, 'popupscript');
-			if ( !is_array($meta)) {
-				$meta = array();
-				$meta['popupscript'] = array();
-			}
-			
-			$meta['popupscript'][] = trim($data);
-			p_set_metadata($ID, $meta);
+			p_set_metadata($ID, array( 'popupscript' => trim($data)));
 		}
     }
 }

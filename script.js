@@ -216,7 +216,7 @@
 							var script = "";
 							node.find('popupscript').
 							each(function() {
-								script += (this.innerHTML || this.innerText);
+								script += $.parseJSON((this.innerHTML || this.innerText));
 							})
 
 							var newContext = "jQuery.noConflict(); containerContext = this; ___ = function( selector, context ){return new jQuery.fn.init(selector,context||containerContext);}; ___.fn = ___.prototype = jQuery.fn;jQuery.extend( ___, jQuery );jQuery = ___;\n"
