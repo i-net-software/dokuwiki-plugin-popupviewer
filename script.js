@@ -194,35 +194,6 @@
 								height: content.height()
 							})
 
-							node.find('a[href],form[action]').
-							each(function(){
-								// Replace all event handler
-								
-								var element = $(this);
-								
-								urlpart = element.attr('href') || element.attr('action') || "";
-								if ( urlpart.match(new RegExp("^#.*?$")) ) {
-									// Scroll to anchor
-									element.click(function(){
-										content.get(0).scrollTop( urlpart == '#' ? 0 : $(urlpart).offset().top);
-									});
-								}
-								
-								if ( this.getAttribute('popupviewerdata') ) {
-									this.popupData = $.parseJSON(this.getAttribute('popupviewerdata'));
-									this.removeAttribute('popupviewerdata');
-								} else {
-									this.popupData = jQuery.extend(true, {}, popupData);
-									this.popupData.src = urlpart;
-									delete(this.popupData.id); // or it will always load this file.
-								}
-								
-								$(this).bind('click', function(e){
-									e.stopPropagation(); e.preventDefault();
-									_.hideViewer(e, _.presentViewerWithContent);
-								});
-							});
-
 							content.html(this);
 
 							// Check for Javascript to execute
@@ -306,6 +277,38 @@
 
 				});
 			}
+		};
+		
+		/* has to be called via popupscript in page if needed. */
+		_.propagateClickHandler = function(node) {
+			node.find('a[href],form[action]').
+			each(function(){
+				// Replace all event handler
+				
+				var element = $(this);
+				
+				urlpart = element.attr('href') || element.attr('action') || "";
+				if ( urlpart.match(new RegExp("^#.*?$")) ) {
+					// Scroll to anchor
+					element.click(function(){
+						content.get(0).scrollTop( urlpart == '#' ? 0 : $(urlpart).offset().top);
+					});
+				}
+				
+				if ( this.getAttribute('popupviewerdata') ) {
+					this.popupData = $.parseJSON(this.getAttribute('popupviewerdata'));
+					this.removeAttribute('popupviewerdata');
+				} else {
+					this.popupData = jQuery.extend(true, {}, popupData);
+					this.popupData.src = urlpart;
+					delete(this.popupData.id); // or it will always load this file.
+				}
+				
+				$(this).bind('click', function(e){
+					e.stopPropagation(); e.preventDefault();
+					_.hideViewer(e, _.presentViewerWithContent);
+				});
+			});
 		};
 		
 		internal.getCurrentLocation = function() {
