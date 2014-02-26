@@ -70,7 +70,7 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
 	                $script .= "try{(function($){".$popupscript."}(jQuery))}catch(e){alert('Could not execute popupscript: '+e);}";
                 }
 
-                $head['popupscript'][] = array( 'type'=>'text/popupscript', '_data'=> $json->encode($script));
+                $head['popupscript'][] = array( 'type'=>'text/popupscript', '_data'=> $script);
 
                 $data = '<div class="dokuwiki" style="padding-bottom: 10px;">' . p_wiki_xhtml($ID,'',true) . '</div>';
                 break;
