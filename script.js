@@ -127,7 +127,7 @@
 			}
 		};
 	
-		_.clickHandler = function(e, popupData) {
+		_.presentViewerWithContent = function(e, popupData) {
 
 			popupData = popupData || this.popupData || e.target.popupData; // Either as param or from object
 			if ( !popupData ) { return; }
@@ -207,7 +207,7 @@
 								
 								$(this).bind('click', function(e){
 									e.stopPropagation(); e.preventDefault();
-									_.hideViewer(e, _.clickHandler);
+									_.hideViewer(e, _.presentViewerWithContent);
 								});
 							});
 
@@ -460,7 +460,7 @@
 			_.popupImageStack = $(popupImageStack || 'a[popupviewerdata]').each(function(){
 				this.popupData = this.popupData || $.parseJSON(this.getAttribute('popupviewerdata'));
 				if (this.removeAttribute) this.removeAttribute('popupviewerdata');
-				$(this).unbind('click').click(_.clickHandler);
+				$(this).unbind('click').click(_.presentViewerWithContent);
 			}).filter(function(){
 				// Only images allowed in Stack.
 				return this.popupData.isImage;
