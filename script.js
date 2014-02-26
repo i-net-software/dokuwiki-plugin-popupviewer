@@ -130,6 +130,18 @@
 		_.presentViewerWithContent = function(e, popupData) {
 
 			popupData = popupData || this.popupData || e.target.popupData; // Either as param or from object
+			
+			/*
+				popupData = {
+					isImage: boolean,
+					call: ajax_handler,
+					src: URL,
+					id: alternate_wiki_page,
+					width: width_of_window,
+					height: height_of_window
+				}
+			*/
+			
 			if ( !popupData ) { return; }
 
 			e && e.preventDefault();
@@ -266,9 +278,9 @@
 							success($(data.body));
 						};
 						
-						iframe = $('<iframe/>').load(function(){
+						var iframe = $('<iframe/>').load(function(){
 
-							var frame = iframe.get(0);
+							var frame = this;
 							if ( frame.contentWindow.postMessage ) {
 							
 								// Register the Message Event for PostMessage receival
