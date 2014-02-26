@@ -21,7 +21,7 @@
 	position: absolute;
 	cursor: pointer;
 	width: 24px;
-	display: block;
+	display: none;
 	height: 24px;
 
 	top: 0px;
@@ -49,8 +49,8 @@
 		cursor: default;
 	}
 	
-	&.hidden {
-		display: none;
+	&.visible {
+		display: block;
 	}
 }
 

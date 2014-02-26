@@ -143,8 +143,14 @@
 			*/
 			
 			if ( !popupData ) { return; }
-
 			e && e.preventDefault();
+
+			if ( content && !content.is(':empty') ) {
+				e.target.popupData = popupData;
+				_.hideViewer(e, _.presentViewerWithContent);
+				return _;
+			}
+
 			_.showViewer();
 
 			content.current = $(this);
@@ -200,7 +206,7 @@
 							var script = "";
 							node.find('popupscript').
 							each(function() {
-								script += $.parseJSON((this.innerHTML || this.innerText));
+								script += (this.innerHTML || this.innerText);
 							})
 
 							var newContext = "jQuery.noConflict(); containerContext = this; ___ = function( selector, context ){return new jQuery.fn.init(selector,context||containerContext);}; ___.fn = ___.prototype = jQuery.fn;jQuery.extend( ___, jQuery );jQuery = ___;\n"
@@ -212,7 +218,7 @@
 								var newContext = "jQuery.noConflict(); containerContext = this; ___ = function( selector, context ){return new jQuery.fn.init(selector,context||containerContext);}; ___.fn = ___.prototype = jQuery.fn;jQuery.extend( ___, jQuery );jQuery = ___;\n"
 								
 								try{
-									$.globalEval("try{\n(function(){\n"+newContext+script+"\n}).call(jQuery('div#"+randomID+"').get(0));\n}catch(e){}\n//");
+									$.globalEval("try{\nvar fn=function(){\n"+newContext+script+"\n};fn.displayName='popupviewerfunction';fn.call(jQuery('div#"+randomID+"').get(0));\n}catch(e){}\n//");
 								} catch (e) {
 									internal.log("Exception!");
 									internal.log(e);
@@ -446,7 +452,7 @@
 		
 		_.handleNextAndPrevious = function(currentIsImage) {
 		
-			if ( currentIsImage && _.popupImageStack && _.popupImageStack.length > 1) {
+			if ( currentIsImage && _.popupImageStack && _.popupImageStack.size() > 1) {
 			
 				if ( _.isFirst() ) {
 					previous.addClass('inactive');
