@@ -144,5 +144,32 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
             return ' popupviewerclose';
         }
     }
+
+	/**
+	 * Implements API from imagemap
+	 */
+    function convertToImageMapArea($imagemap, $data, $pos) {
+
+        list($id, $name, $title, $w, $h, $orig, $close) = $data;
+
+        if ( !preg_match('/^(.*)@([^@]+)$/u', array_pop(explode('|', $name)), $match)) {
+            return;
+        }
+        
+        $coords = explode(',',$match[2]);
+        if (count($coords) == 3) {
+            $shape = 'circle';
+        } elseif (count($coords) == 4) {
+            $shape = 'rect';
+        } elseif (count($coords) >= 6) {
+            $shape = 'poly';
+        } else {
+            return;
+        }
+        
+        $coords = array_map('trim', $coords);
+        $name = trim($match[1]);
+        $imagemap->CallWriter->writeCall(array('plugin', array('popupviewer_viewer', array($id, $name, $title, $w, $h, $orig, $close, array('shape' => $shape, 'coords' => join(',',$coords))), DOKU_LEXER_MATCHED), $pos));
+    }
 }
 // vim:ts=4:sw=4:et:enc=utf-8:
