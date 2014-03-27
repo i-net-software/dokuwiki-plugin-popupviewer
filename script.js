@@ -179,7 +179,7 @@
 						content.popupData = jQuery.extend(true, {}, popupData);
 	
 						additionalContent.html(wrapper.html());
-						_.resizePopup(popupData.width, popupData.height, additionalContent.innerHeight(), image);
+						_.resizePopup(popupData.width, popupData.height, additionalContent.innerHeight(), image, false, popupData.hasNextPrevious);
 					});
 				});
 				
@@ -209,23 +209,21 @@
 								script += (this.innerHTML || this.innerText);
 							})
 
-							var newContext = "jQuery.noConflict(); containerContext = this; ___ = function( selector, context ){return new jQuery.fn.init(selector,context||containerContext);}; ___.fn = ___.prototype = jQuery.fn;jQuery.extend( ___, jQuery );jQuery = ___;\n"
-
 							if ( script.length > 0 ) {
 								var randomID = Math.ceil(Math.random()*1000000);
 								content.attr('id', randomID);
 
-								var newContext = "jQuery.noConflict(); containerContext = this; ___ = function( selector, context ){return new jQuery.fn.init(selector,context||containerContext);}; ___.fn = ___.prototype = jQuery.fn;jQuery.extend( ___, jQuery );jQuery = ___;\n"
+								var newContext = ""; //"jQuery.noConflict(); containerContext = this; ___ = function( selector, context ){return new jQuery.fn.init(selector,context||containerContext);}; ___.fn = ___.prototype = jQuery.fn;jQuery.extend( ___, jQuery );jQuery = ___;\n"
 								
 								try{
-									$.globalEval("try{\nvar fn=function(){\n"+newContext+script+"\n};fn.displayName='popupviewerfunction';fn.call(jQuery('div#"+randomID+"').get(0));\n}catch(e){}\n//");
+									$.globalEval("try{\n(function(){\n"+newContext+script+"\n}).call(jQuery('div#"+randomID+"').get(0));\n}catch(e){}\n//");
 								} catch (e) {
 									internal.log("Exception!");
 									internal.log(e);
 								}
 							}
 
-							_.resizePopup(popupData.width, popupData.height, null, content, true);
+							_.resizePopup(popupData.width, popupData.height, null, content, true, popupData.hasNextPrevious);
 
 						}, waitForAll: true});
 					}
@@ -337,7 +335,7 @@
 			return {width: width, height: height};
 		}
 		
-		_.resizePopup = function(width, height, additionalHeight, offsetElement, isPageContent) {
+		_.resizePopup = function(width, height, additionalHeight, offsetElement, isPageContent, needsNextPrevious) {
 
 			if ( offsetElement && !width && !height) {
 				var optimalSize = internal.optimalSize(offsetElement);
@@ -412,7 +410,7 @@
 				content.addClass('isImage');
 			}
 			
-			_.handleNextAndPrevious(!isPageContent);
+			_.handleNextAndPrevious(!isPageContent || needsNextPrevious);
 			return _;
 		};
 		
@@ -478,13 +476,13 @@
 
 		_.init = function(popupImageStack) {
 
-			_.popupImageStack = $(popupImageStack || 'a[popupviewerdata]').each(function(){
+			_.popupImageStack = $(popupImageStack || '*[popupviewerdata]').each(function(){
 				this.popupData = this.popupData || $.parseJSON(this.getAttribute('popupviewerdata'));
 				if (this.removeAttribute) this.removeAttribute('popupviewerdata');
 				$(this).unbind('click').click(_.presentViewerWithContent);
 			}).filter(function(){
 				// Only images allowed in Stack.
-				return this.popupData.isImage;
+				return this.popupData.isImage || this.popupData.hasNextPrevious;
 			});
 			
 			return _;
