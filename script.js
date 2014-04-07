@@ -24,7 +24,7 @@
 		_.popupImageStack = null;
 		
 		internal.log = function(message) {
-			console.log(message);	
+			// console.log(message);	
 		};
 		
 		_.showViewer = function() {
@@ -179,6 +179,7 @@
 						content.popupData = jQuery.extend(true, {}, popupData);
 	
 						additionalContent.html(wrapper.html());
+                        _.registerCloseHandler();
 						_.resizePopup(popupData.width, popupData.height, additionalContent.innerHeight(), image, false, popupData.hasNextPrevious);
 					});
 				});
@@ -209,7 +210,8 @@
 								script += (this.innerHTML || this.innerText);
 							})
 
-							if ( script.length > 0 ) {
+							if ( script.length > 0 )
+							{
 								var randomID = Math.ceil(Math.random()*1000000);
 								content.attr('id', randomID);
 
@@ -223,6 +225,13 @@
 								}
 							}
 
+							if ( popupData.postPopupHook && typeof popupData.postPopupHook == 'function' ) {
+							    // Post-Hook which as to be a javascript function and my modify the popupData
+    							popupData.postPopupHook(this, popupData);
+							}
+
+                            _.registerCloseHandler();
+                            // At the very end we will resize the popup to fit the content.
 							_.resizePopup(popupData.width, popupData.height, null, content, true, popupData.hasNextPrevious);
 
 						}, waitForAll: true});
@@ -319,12 +328,16 @@
 			return content.current.attr('href') || content.current.attr('src') || content.current.attr('action');
 		};
 		
-		internal.optimalSize = function(offsetElement) {
-			
+		internal.optimalSize = function(offsetElement, isPageContent) {
+/*			
+			if ( !isPageContent ) {
+				return {width: offsetElement.get(0).width, height: offsetElement.get(0).height};
+			}
+*/			
 			var prevWidth = content.width();
 			var prevHeight = content.height();
 		
-			offsetElement.css({width:'', height: ''});
+			offsetElement.css({width:'auto', height: 'auto'});
 			
 			width = offsetElement.width();
 			height = offsetElement.height(); 
@@ -337,12 +350,16 @@
 		
 		_.resizePopup = function(width, height, additionalHeight, offsetElement, isPageContent, needsNextPrevious) {
 
+			internal.log("Initial Size: " + width + " " + height);
+			internal.log(offsetElement);
+			
 			if ( offsetElement && !width && !height) {
-				var optimalSize = internal.optimalSize(offsetElement);
+				var optimalSize = internal.optimalSize(offsetElement, isPageContent);
 				width = optimalSize.width;
 				height = optimalSize.height; 
 			}
 			
+			internal.log("OffsetElement Size: " + width + " " + height);
 			width = parseInt(width) || ($(window).width() * 0.7);
 			height = parseInt(height) || ($(window).height() * 0.8);
 			
@@ -353,6 +370,8 @@
 			additionalHeight = additionalHeight || 0;
 			height += additionalHeight;
 			
+			internal.log("After Additional Content Size: " + width + " " + height);
+
 			if ( height > maxHeight ) {
 				height = maxHeight;
 				if ( !isPageContent ) { // If this is an image we will have to fix the size
@@ -375,8 +394,8 @@
 			yOffset = Math.max(($(window).height() - height) * 0.5 + yOffset, 5);
 			xOffset += ($(window).width() - width) * 0.5;
 			
-			internal.log(width + " " + height);
-			internal.log(xOffset + " " + yOffset);
+			internal.log("Final Size: " + width + " " + height);
+			internal.log("Final Offset: " + xOffset + " " + yOffset);
 			
 			if ( !isPageContent && offsetElement.is('img') ) {
 
@@ -473,6 +492,17 @@
 			
 			return _;
 		};
+
+        _.registerCloseHandler = function () {
+            $('*[popupviewerclose]').each(function(){
+                $(this).click(function(e){
+                   e && e.preventDefault();
+                   _.hideViewer(e);
+                   return false;
+                });
+                if (this.removeAttribute) this.removeAttribute('popupviewerclose');
+            });
+        }
 
 		_.init = function(popupImageStack) {
 
