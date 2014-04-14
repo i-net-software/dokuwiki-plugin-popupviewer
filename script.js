@@ -397,7 +397,7 @@
 			internal.log("Final Size: " + width + " " + height);
 			internal.log("Final Offset: " + xOffset + " " + yOffset);
 			
-			if ( !isPageContent && offsetElement.is('img') ) {
+			if ( !isPageContent && offsetElement && offsetElement.is('img') ) {
 
 				offsetElement.animate({
 					width : width,
