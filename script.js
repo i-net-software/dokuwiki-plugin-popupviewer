@@ -576,7 +576,7 @@
             var hasImgProperties = $.waitForImages.hasImageProperties || [];
             // To match `url()` references.
             // Spec: http://www.w3.org/TR/CSS2/syndata.html#value-def-uri
-            var matchUrl = /url\(\s*(['"]?)(.*?)\1\s*\)/g;
+            var matchUrl = new RegExp("url\(\s*(['"]?)(.*?)\1\s*\)", "g");
 
             if (waitForAll) {
 
