@@ -339,8 +339,8 @@
 		
 			offsetElement.css({width:'auto', height: 'auto'});
 			
-			width = offsetElement.width();
-			height = offsetElement.height(); 
+			width = offsetElement.naturalWidth() || offsetElement.width();
+			height = offsetElement.naturalWidth() || offsetElement.height(); 
 
 			// Reset to previous size so the whole thing will animate from the middle
 			offsetElement.css({width:prevWidth, height: prevHeight});
@@ -576,7 +576,7 @@
             var hasImgProperties = $.waitForImages.hasImageProperties || [];
             // To match `url()` references.
             // Spec: http://www.w3.org/TR/CSS2/syndata.html#value-def-uri
-            var matchUrl = new RegExp("url\(\s*(['"]?)(.*?)\1\s*\)", "g");
+            var matchUrl = new RegExp("url\(\s*(['\"]?)(.*?)\1\s*\)", "g");
 
             if (waitForAll) {
 
