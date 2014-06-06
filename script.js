@@ -173,7 +173,7 @@
 							width: content.width(),
 							height: content.height(),
 							overflow: 'hidden'
-						})
+						});
 	
 						content.append(image);
 						content.popupData = jQuery.extend(true, {}, popupData);
@@ -199,7 +199,7 @@
 							content.css({
 								width: content.width(),
 								height: content.height()
-							})
+							});
 
 							content.html(this);
 
@@ -208,7 +208,7 @@
 							node.find('popupscript').
 							each(function() {
 								script += (this.innerHTML || this.innerText);
-							})
+							});
 
 							if ( script.length > 0 )
 							{
@@ -235,7 +235,7 @@
 							_.resizePopup(popupData.width, popupData.height, null, content, true, popupData.hasNextPrevious);
 
 						}, waitForAll: true});
-					}
+					};
 				
 				
 					if ( status == "error") {
@@ -346,7 +346,7 @@
 			offsetElement.css({width:prevWidth, height: prevHeight});
 			
 			return {width: width, height: height};
-		}
+		};
 		
 		_.resizePopup = function(width, height, additionalHeight, offsetElement, isPageContent, needsNextPrevious) {
 
@@ -457,15 +457,15 @@
 			}
 			
 			return _;
-		}
+		};
 
 		_.isFirst = function() {
 			return _.popupImageStack.first().is(content.current);
-		}
+		};
 
 		_.isLast = function() {
 			return _.popupImageStack.last().is(content.current);
-		}
+		};
 		
 		_.handleNextAndPrevious = function(currentIsImage) {
 		
@@ -502,7 +502,7 @@
                 });
                 if (this.removeAttribute) this.removeAttribute('popupviewerclose');
             });
-        }
+        };
 
 		_.init = function(popupImageStack) {
 
