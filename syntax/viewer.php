@@ -15,6 +15,8 @@ require_once(DOKU_PLUGIN.'syntax.php');
 
 class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
 
+    private $headers = array();
+
     function getInfo(){
         return array_merge(confToHash(dirname(__FILE__).'/plugin.info.txt'), array(
 				'name' => 'PopUpViewer Linking Component',
@@ -58,7 +60,7 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
             $exists = @file_exists($file) && @is_file($file);
         }
 
-        $scID = sectionID(noNs($id), $renderer->headers);
+        $scID = sectionID(noNs($id), $this->headers);
         $more = 'id="' . $scID . '"';
         $script = '';
 
