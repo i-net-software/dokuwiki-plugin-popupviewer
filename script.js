@@ -308,9 +308,9 @@
 					});
 				}
 				
-				if ( this.getAttribute('popupviewerdata') ) {
-					this.popupData = $.parseJSON(this.getAttribute('popupviewerdata'));
-					this.removeAttribute('popupviewerdata');
+				if ( this.getAttribute('data-popupviewer') ) {
+					this.popupData = $.parseJSON(this.getAttribute('data-popupviewer'));
+					this.removeAttribute('data-popupviewer');
 				} else {
 					this.popupData = jQuery.extend(true, {}, popupData);
 					this.popupData.src = urlpart;
@@ -494,21 +494,21 @@
 		};
 
         _.registerCloseHandler = function () {
-            $('*[popupviewerclose]').each(function(){
+            $('*[data-popupviewerclose]').each(function(){
                 $(this).click(function(e){
                    e && e.preventDefault();
                    _.hideViewer(e);
                    return false;
                 });
-                if (this.removeAttribute) this.removeAttribute('popupviewerclose');
+                if (this.removeAttribute) this.removeAttribute('data-popupviewerclose');
             });
         };
 
 		_.init = function(popupImageStack) {
 
-			_.popupImageStack = $(popupImageStack || '*[popupviewerdata]').each(function(){
-				this.popupData = this.popupData || $.parseJSON(this.getAttribute('popupviewerdata'));
-				if (this.removeAttribute) this.removeAttribute('popupviewerdata');
+			_.popupImageStack = $(popupImageStack || '*[data-popupviewer]').each(function(){
+				this.popupData = this.popupData || $.parseJSON(this.getAttribute('data-popupviewer'));
+				if (this.removeAttribute) this.removeAttribute('data-popupviewer');
 				$(this).unbind('click').click(_.presentViewerWithContent);
 			}).filter(function(){
 				// Only images allowed in Stack.

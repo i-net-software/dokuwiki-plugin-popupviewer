@@ -141,9 +141,9 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
 
     function _getOnClickHandler($close, $data=array()) {
         if ( !$close ) {
-            return ' popupviewerdata="' . htmlentities(json_encode(array_filter($data))) . '"';
+            return ' data-popupviewer="' . htmlentities(json_encode(array_filter($data))) . '"';
         } else {
-            return ' popupviewerclose';
+            return ' data-popupviewerclose';
         }
     }
 
