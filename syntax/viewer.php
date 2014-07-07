@@ -129,9 +129,9 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
         $name = trim(preg_replace("%^(\s|\r|\n)*?<a.+?>(.*)?</a>(\s|\r|\n)*?$%is", "$2", preg_replace("%^(\s|\r|\n)*?<p.*?>(.*)?</p>(\s|\r|\n)*?$%is", "$2", $name)));
          
         if ( !is_array($isImageMap) ) {
-            return '<a href="'.$id.'" ' . $more . ' >' . $name . '</a>' . $script;
+            return '<a href="'.$id.'" ' . trim($more) . ' >' . $name . '</a>' . $script;
         } else {
-            $return = '<area href="'.$id.'" ' . $more . '';
+            $return = '<area href="'.$id.'" ' . trim($more) . '';
             $return .= ' title="'.$name.'" alt="'.$name.'"';
             $return .= ' shape="'.$isImageMap['shape'].'" coords="'.$isImageMap['coords'].'" />' . $script;
             
