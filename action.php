@@ -22,7 +22,7 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
 				));
     }
 
-    function register(&$controller) {
+    function register(Doku_Event_Handler $controller) {
         // Support given via AJAX
         $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'ajax_viewer_provider');
     }
