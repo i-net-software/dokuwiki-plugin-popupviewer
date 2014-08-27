@@ -285,7 +285,7 @@
 						}, 30000);
 						
 					} else {
-						success(wrapper)
+						success(wrapper);
 					}
 
 				});
