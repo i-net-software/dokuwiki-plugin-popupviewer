@@ -3,7 +3,7 @@
 base   popupviewer
 author i-net software
 email  tools@inetsoftware.de
-date   2014-07-15
+date   2014-08-27
 name   PopUpViewer
 
 url    https://github.com/i-net-software/dokuwiki-plugin-popupviewer
