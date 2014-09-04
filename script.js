@@ -339,8 +339,8 @@
 		
 			offsetElement.css({width:'auto', height: 'auto'});
 			
-			width = offsetElement.naturalWidth() || offsetElement.width();
-			height = offsetElement.naturalHeight() || offsetElement.height(); 
+			var width = offsetElement.naturalWidth() || offsetElement.width();
+			var height = offsetElement.naturalHeight() || offsetElement.height(); 
 
 			// Reset to previous size so the whole thing will animate from the middle
 			offsetElement.css({width:prevWidth, height: prevHeight});
@@ -651,7 +651,22 @@
             });
         });
     };
-    	
+
+	$(function(){
+	
+	    if ( typeof $.fn.naturalWidth == 'undefined' && typeof $.fn.naturalHeight == 'undefined' ) { return; }
+	
+		function img(url) { var i = new Image(); i.src = url; return i; }
+		if ('naturalWidth' in (new Image())) {
+			$.fn.naturalWidth  = function() { return this[0].naturalWidth; };
+			$.fn.naturalHeight = function() { return this[0].naturalHeight; };
+			return;
+		}
+
+		$.fn.naturalWidth  = function() { return img(this.src).width; };
+		$.fn.naturalHeight = function() { return img(this.src).height; };
+	});
+	
 	$(function(){
 		$.popupviewer().init();
 	});
