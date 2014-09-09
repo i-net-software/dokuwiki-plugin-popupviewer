@@ -201,6 +201,12 @@
 								height: content.height()
 							});
 
+                            $(this).on( "click", "a", function(){
+                               // Insert base URL, so the link will be correct. hopefully.
+                               var base = $('<base href="' + popupData.src + '"/>');
+                               $("head").append(base);
+                            });
+
 							content.html(this);
 
 							// Check for Javascript to execute
@@ -262,6 +268,7 @@
 							success($(data.body));
 						};
 						
+						popupData.src = internal.getCurrentLocation();
 						var iframe = $('<iframe/>').load(function(){
 
 							var frame = this;
@@ -275,7 +282,7 @@
 								frame.contentWindow.postMessage(message, "*");
 							}
 							
-						}).hide().attr('src', internal.getCurrentLocation() ).appendTo('body');
+						}).hide().attr('src', popupData.src ).appendTo('body');
 						
 						window.setTimeout(function() {
 							if (!finished) {
