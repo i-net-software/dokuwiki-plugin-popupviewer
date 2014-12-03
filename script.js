@@ -192,7 +192,11 @@
 
 					var success = function(node)
 					{
-						node.find('div.dokuwiki,body').first().waitForImages({
+						if ( !popupData.do || popupData.do != 'export_xhtmlbody') {
+    						node = node.find('div.dokuwiki,body').first();
+    				    }
+						
+						node.waitForImages({
 							finished: function() {
 						
 							// Force size for the moment
@@ -208,6 +212,11 @@
                             });
 
 							content.html(this);
+							
+							// If we want to have all other pages open as well, go with it.
+							if ( popupData.keepOpen ) {
+    							_.propagateClickHandler($(this), popupData);
+							}
 
 							// Check for Javascript to execute
 							var script = "";
@@ -300,14 +309,14 @@
 		};
 		
 		/* has to be called via popupscript in page if needed. */
-		_.propagateClickHandler = function(node) {
+		_.propagateClickHandler = function(node, popupData) {
 			node.find('a[href],form[action]').
 			each(function(){
 				// Replace all event handler
 				
 				var element = $(this);
 				
-				urlpart = element.attr('href') || element.attr('action') || "";
+				var urlpart = element.attr('href') || element.attr('action') || "";
 				if ( urlpart.match(new RegExp("^#.*?$")) ) {
 					// Scroll to anchor
 					element.click(function(){
@@ -321,6 +330,8 @@
 				} else {
 					this.popupData = jQuery.extend(true, {}, popupData);
 					this.popupData.src = urlpart;
+                    this.popupData.do = 'export_xhtmlbody';
+					
 					delete(this.popupData.id); // or it will always load this file.
 				}
 				

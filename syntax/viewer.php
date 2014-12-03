@@ -44,15 +44,24 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
         list($id, $name) = explode('|', $orig, 2); // find ID/Params + Name Extension
         list($name, $title) = explode('%', $name, 2); // find Name and Title
         list($id, $param) = explode('?', $id, 2); // find ID + Params
-        list($w, $h) = explode('x', $param, 2); // find Size
-
-        return array(trim($id), $name, $title, $w, $h, $orig, $close);
+        
+        $params = explode('&', strtolower($param));
+        $w = $h = $keepOpen = null;
+        foreach( $params as $p ) {
+            if ( $p === 'keepOpen' ) {
+                $keepOpen = true;
+            } else {
+                list($w, $h) = explode('x', $p, 2); // find Size
+            }
+        } 
+        
+        return array(trim($id), $name, $title, $w, $h, $orig, $close, null, $keepOpen);
     }
 
     function render($mode, &$renderer, $data) {
         global $ID, $conf, $JSINFO;
 
-        list($id, $name, $title, $w, $h, $orig, $close, $isImageMap) = $data;
+        list($id, $name, $title, $w, $h, $orig, $close, $isImageMap, $keepOpen) = $data;
         if ( empty($id) ) { $exists = false; } else
         {
             $page   = resolve_id(getNS($ID),$id);
@@ -112,6 +121,10 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
 				'height' => $h,
 				'id' => $id
 			);
+			
+			if ( $keepOpen ) {
+    			$data['keepOpen'] = true;
+			}
 
             // Add ID for AJAX - this.href for offline versions
             $more = $this->_getOnClickHandler($close, $data);
