@@ -25,9 +25,10 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
     function register(Doku_Event_Handler $controller) {
         // Support given via AJAX
         $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'ajax_viewer_provider');
+        $controller->register_hook('MULTIORPHAN_INSTRUCTION_LINKED', 'BEFORE', $this, 'multiorphan_link_check');
     }
 
-    function ajax_viewer_provider( &$event ) {
+    function ajax_viewer_provider( Doku_Event &$event ) {
         global $JSINFO;
         global $INFO;
         global $ID;
@@ -95,5 +96,25 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
 
         print $data;
         return;
+    }
+    
+    function multiorphan_link_check(Doku_Event &$event) {
+        
+        $instructions = $event->data['instructions'];
+        if ( !strstr($instructions[0], 'popupviewer') ) {
+            return;
+        }
+        
+        $event->data['entryID'] = $id = cleanID($instructions[1][0]);
+
+        $page   = resolve_id(getNS($event->data['checkNamespace']),$id);
+        $file   = mediaFN($page);
+        
+        $event->data['exists'] = $exists = @file_exists($file) && @is_file($file);
+        $event->data['type']   = $exists ? 'media' : 'pages';
+        
+        if ( !$exists ) {
+            resolve_pageid(getNS($event->data['checkNamespace']),$id,$event->data['exists']);
+        }
     }
 }
