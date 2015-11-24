@@ -62,11 +62,15 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
         global $ID, $conf, $JSINFO;
 
         list($id, $name, $title, $w, $h, $orig, $close, $isImageMap, $keepOpen) = $data;
-        if ( empty($id) ) { $exists = false; } else
-        {
-            $page   = resolve_id(getNS($ID),$id);
-            $file   = mediaFN($page);
-            $exists = @file_exists($file) && @is_file($file);
+
+        $exists = false;
+        if ( !empty($id) ) {
+            $origID = $id;
+            resolve_mediaid(getNS($ID),$id,$exists);
+            if ( !$exsits ) {
+                $id = $origID;
+                resolve_pageid(getNS($ID),$id);
+            }
         }
 
         $scID = sectionID(noNs($id), $this->headers);
@@ -181,7 +185,7 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
         } else {
             return;
         }
-        
+                
         $coords = array_map('trim', $coords);
         $name = trim($match[1]);
         $imagemap->CallWriter->writeCall(array('plugin', array('popupviewer_viewer', array($id, $name, $title, $w, $h, $orig, $close, array('shape' => $shape, 'coords' => join(',',$coords))), DOKU_LEXER_MATCHED), $pos));
