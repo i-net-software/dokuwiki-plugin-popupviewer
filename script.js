@@ -192,7 +192,9 @@
 
 					var success = function(node)
 					{
+    					var popupScriptNode = node;
 						if ( !popupData.do || popupData.do != 'export_xhtmlbody') {
+    						popupScriptNode = jQuery('<div/>').append(node.find('popupscript'));
     						node = node.find('div.dokuwiki,body').first();
     				    }
 						
@@ -220,7 +222,7 @@
 
 							// Check for Javascript to execute
 							var script = "";
-							node.find('popupscript').
+							popupScriptNode.find('popupscript').
 							each(function() {
 								script += (this.innerHTML || this.innerText);
 							});
