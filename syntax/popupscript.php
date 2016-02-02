@@ -27,7 +27,7 @@ class syntax_plugin_popupviewer_popupscript extends DokuWiki_Syntax_Plugin {
         $this->Lexer->addExitPattern('</popupscript>', 'plugin_popupviewer_popupscript');
     }
 
-    function handle($match, $state, $pos, &$handler) {
+    function handle($match, $state, $pos, Doku_Handler $handler) {
     	if ( $state == DOKU_LEXER_UNMATCHED ) {
 	    	return $match;
     	}
@@ -35,7 +35,7 @@ class syntax_plugin_popupviewer_popupscript extends DokuWiki_Syntax_Plugin {
     	return false;
     }
 
-    function render($mode, &$renderer, $data) {
+    function render($mode, Doku_Renderer $renderer, $data) {
 
 		global $ID;
 
