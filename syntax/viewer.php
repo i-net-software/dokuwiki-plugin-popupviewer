@@ -69,7 +69,6 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
             resolve_mediaid(getNS($ID),$id,$exists);
             if ( !$exsits ) {
                 $id = $origID;
-                resolve_pageid(getNS($ID),$id);
             }
         }
 
