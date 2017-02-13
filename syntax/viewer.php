@@ -61,6 +61,8 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
     function render($mode, Doku_Renderer $renderer, $data) {
         global $ID, $conf, $JSINFO;
 
+        if ( $mode != 'xhtml' ) { return true; }
+
         list($id, $name, $title, $w, $h, $orig, $close, $isImageMap, $keepOpen) = $data;
 
         $exists = false;
@@ -81,19 +83,24 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
 
             $p1 = Doku_Handler_Parse_Media($orig);
 
-            $p = array();
-            $p['alt'] = $id;
-            $p['class'] = 'popupimage';
-            $p['title'] = $title;
-            $p['id'] = 'popupimage_' . $scID;
-            if ($p1['width']) $p['width'] = $p1['width'];
-            if ($p1['height']) $p['height'] = $p1['height'];
-            if ($p1['title'] && !$p['title']) { $p['title'] = $p1['title']; $p['alt'] = $p1['title']; }
-            if ($p1['align']) $p['class'] .= ' media' . $p1['align'];
-
-            $p2 = buildAttributes($p);
             if ( empty($name) ) {
-                $name = '<img src="' . ml($id, array( 'w' => $p['width'], 'h' => $p['height'] ) ) . '" '.$p2.'/>';
+                
+                if ( !method_exists($renderer, '_media') ) {
+                    $p = array();
+                    $p['alt'] = $id;
+                    $p['class'] = 'popupimage';
+                    $p['title'] = $title;
+                    $p['id'] = 'popupimage_' . $scID;
+                    if ($p1['width']) $p['width'] = $p1['width'];
+                    if ($p1['height']) $p['height'] = $p1['height'];
+                    if ($p1['title'] && !$p['title']) { $p['title'] = $p1['title']; $p['alt'] = $p1['title']; }
+                    if ($p1['align']) $p['class'] .= ' media' . $p1['align'];
+    
+                    $p2 = buildAttributes($p);
+                    $name = '<img src="' . ml($id, array( 'w' => $p['width'], 'h' => $p['height'] ) ) . '" '.$p2.'/>';
+                } else {
+                    $name = $renderer->_media($id, ($title ? $title : ($p1['title'] ? $p1['title'] : $id) ), ' popupimage' . ($p1['align'] ? ' media' . $p1['align'] : '' ), $p1['width'], $p1['height']);
+                }
             } else {
                 $name = trim(p_render($mode, p_get_instructions(trim($name)), $info));
                 $name = trim(preg_replace("%^(\s|\r|\n)*?<a.+?>(.*)?</a>(\s|\r|\n)*?$%is", "$2", preg_replace("%^(\s|\r|\n)*?<p.*?>(.*)?</p>(\s|\r|\n)*?$%is", "$2", $name)));
