@@ -16,10 +16,10 @@ require_once(DOKU_PLUGIN.'action.php');
 class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
 
     function getInfo(){
-    	return array_merge(confToHash(dirname(__FILE__).'/plugin.info.txt'), array(
-				'name' => 'PopUpViewer Action Component',
-				'desc' => 'Delivers pages back to the browser'
-				));
+        return array_merge(confToHash(dirname(__FILE__).'/plugin.info.txt'), array(
+                'name' => 'PopUpViewer Action Component',
+                'desc' => 'Delivers pages back to the browser'
+                ));
     }
 
     function register(Doku_Event_Handler $controller) {
@@ -54,7 +54,7 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
 
         $data = "";
         $head = array();
-		$ID = getID('id');
+        $ID = getID('id');
 
         switch($event->data) {
             case '_popup_load_file' :
@@ -67,8 +67,8 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
                 $script = 'var JSINFO = '.$json->encode($JSINFO).';';
                 
                 if ( $this->getConf('allowpopupscript') ) {
-	                $popupscript = p_get_metadata($ID, 'popupscript', true);
-	                $script .= "try{(function($){".$popupscript."}(jQuery))}catch(e){alert('Could not execute popupscript: '+e);}";
+                    $popupscript = p_get_metadata($ID, 'popupscript', true);
+                    $script .= "try{(function($){".$popupscript."}(jQuery))}catch(e){alert('Could not execute popupscript: '+e);}";
                 }
 
                 $head['popupscript'][] = array( 'type'=>'text/popupscript', '_data'=> $script);
@@ -77,8 +77,8 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
                 break;
             case '_popup_load_image_meta' :
 
-				global $SRC;
-				$SRC = mediaFN($ID);
+                global $SRC;
+                $SRC = mediaFN($ID);
                 $title = hsc(tpl_img_getTag('IPTC.Headline'));
                 $caption = hsc(tpl_img_getTag('IPTC.Caption'));
 

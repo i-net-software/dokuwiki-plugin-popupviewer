@@ -1,117 +1,117 @@
 .popupviewerContentStyle() {
-	box-shadow: 0.2em 0.2em 3em rgba(255, 255, 255, 0.4);
-	border-radius: 6px;
+    box-shadow: 0.2em 0.2em 3em rgba(255, 255, 255, 0.4);
+    border-radius: 6px;
 }
 
 #popupviewer, #popupviewer:before {
-	position: fixed;
-	top: 0; left: 0; right: 0; bottom: 0;
-	z-index: 11000;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 11000;
 }
 
 #popupviewer:before {
-	content: '';
-	background-color: rgba(0,0,0,0.8);
-	pointer-events: none;
+    content: '';
+    background-color: rgba(0,0,0,0.8);
+    pointer-events: none;
 }
 
 #popupviewer > .controls > a {
 
-	background: url(images/modifier-images.png);
-	position: absolute;
-	cursor: pointer;
-	width: 24px;
-	display: none;
-	height: 24px;
+    background: url(images/modifier-images.png);
+    position: absolute;
+    cursor: pointer;
+    width: 24px;
+    display: none;
+    height: 24px;
 
-	top: 0px;
-	right: 0px;
+    top: 0px;
+    right: 0px;
 
-	margin-top: -13px;
-	margin-right: -13px;
-	z-index: 11010;
+    margin-top: -13px;
+    margin-right: -13px;
+    z-index: 11010;
 
-	&.next {
-		background-position: -24px 0;
-		margin-right: 26px;
-	}
+    &.next {
+        background-position: -24px 0;
+        margin-right: 26px;
+    }
 
-	&.close {
-		background-position: -48px 0;
-	}
+    &.close {
+        background-position: -48px 0;
+    }
 
-	&.previous {
-		margin-right: 50px;
-	}
-	
-	&.inactive {
-		opacity: 0.5;
-		cursor: default;
-	}
-	
-	&.visible {
-		display: block;
-	}
+    &.previous {
+        margin-right: 50px;
+    }
+    
+    &.inactive {
+        opacity: 0.5;
+        cursor: default;
+    }
+    
+    &.visible {
+        display: block;
+    }
 }
 
 #popupviewer > .controls > .content.isImage > a {
-	display: block;
+    display: block;
 }
 
 #popupviewer > .controls > .content.isImage img {
-	.popupviewerContentStyle();
+    .popupviewerContentStyle();
 }
 
 #popupviewer > .controls > .content {
-	background-color: #fff;
-	border: 2px solid #999;
-	z-index: 11002;
-	padding: 10px;
-	overflow: auto;
-	box-sizing: border-box;
-	.popupviewerContentStyle();
-	
-	&.isImage, &:empty {
-		padding: 0px;
-		border: none;
-		background-color: transparent;
-		overflow: visible;
-	}
-	
-	&:empty {
-		background: url(images/loading.gif);
-		width: 208px;
-		height: 13px;
-		margin: auto;
-		position: relative;
-	}
-	
-	&:empty ~ a.next,
-	&:empty ~ a.previous {
-		display: none;
-	}
+    background-color: #fff;
+    border: 2px solid #999;
+    z-index: 11002;
+    padding: 10px;
+    overflow: auto;
+    box-sizing: border-box;
+    .popupviewerContentStyle();
+    
+    &.isImage, &:empty {
+        padding: 0px;
+        border: none;
+        background-color: transparent;
+        overflow: visible;
+    }
+    
+    &:empty {
+        background: url(images/loading.gif);
+        width: 208px;
+        height: 13px;
+        margin: auto;
+        position: relative;
+    }
+    
+    &:empty ~ a.next,
+    &:empty ~ a.previous {
+        display: none;
+    }
 }
 
 #popupviewer > .controls > .additionalContent {
 
-	.popupviewerContentStyle();
-	background-color: #fff;
-	padding: 0px 30px;
-	position:relative;
-	border: 1px solid #333;
-	
-	&:empty {
-		display: none;
-	}
+    .popupviewerContentStyle();
+    background-color: #fff;
+    padding: 0px 30px;
+    position:relative;
+    border: 1px solid #333;
+    
+    &:empty {
+        display: none;
+    }
 }
 
 #popupviewer > .controls {
-	position:absolute;
+    position:absolute;
 
-	/* by default it is empty thus showing the loader */
-	left:50%;
-	top:50%;
-	margin-left: -104px;
+    /* by default it is empty thus showing the loader */
+    left:50%;
+    top:50%;
+    margin-left: -104px;
 
-	z-index: 11004;
+    z-index: 11004;
 }

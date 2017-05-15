@@ -19,9 +19,9 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
 
     function getInfo(){
         return array_merge(confToHash(dirname(__FILE__).'/plugin.info.txt'), array(
-				'name' => 'PopUpViewer Linking Component',
-				'desc' => 'Takes a Page to be diplayed in an overlay pop-out'
-				));
+                'name' => 'PopUpViewer Linking Component',
+                'desc' => 'Takes a Page to be diplayed in an overlay pop-out'
+                ));
     }
 
     function getType() { return 'substition'; }
@@ -126,15 +126,15 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
                 $name = trim(p_render($mode, p_get_instructions(trim($name)), $info));
             }
 
-			$data = array(
-				'width' => $w,
-				'height' => $h,
-				'id' => $id
-			);
-			
-			if ( $keepOpen ) {
-    			$data['keepOpen'] = true;
-			}
+            $data = array(
+                'width' => $w,
+                'height' => $h,
+                'id' => $id
+            );
+            
+            if ( $keepOpen ) {
+                $data['keepOpen'] = true;
+            }
 
             // Add ID for AJAX - this.href for offline versions
             $more = $this->_getOnClickHandler($close, $data);
@@ -170,9 +170,9 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
         }
     }
 
-	/**
-	 * Implements API from imagemap
-	 */
+    /**
+     * Implements API from imagemap
+     */
     function convertToImageMapArea($imagemap, $data, $pos) {
 
         list($id, $name, $title, $w, $h, $orig, $close) = $data;
