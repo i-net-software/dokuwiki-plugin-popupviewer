@@ -61,7 +61,7 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
     function render($mode, Doku_Renderer $renderer, $data) {
         global $ID, $conf, $JSINFO;
 
-        if ( $mode != 'xhtml' ) { return true; }
+        if ( $mode != 'xhtml' && $mode != 'metadata' ) { return true; }
 
         list($id, $name, $title, $w, $h, $orig, $close, $isImageMap, $keepOpen) = $data;
 
@@ -72,6 +72,11 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
             if ( !$exists ) {
                 $id = $origID;
             }
+        }
+
+        if($mode === 'metadata') {
+            $renderer->internalmedia($id,$title);
+            return;
         }
 
         $scID = sectionID(noNs($id), $this->headers);
