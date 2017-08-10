@@ -53,7 +53,12 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
         $event->stopPropagation();
 
         $data = "";
-        $head = array();
+        $head = array(
+            'script' => array(array()),
+            'link' => array(array()),
+            'meta' => array(array()),
+            'popupscript' => array()
+        );
         $ID = getID('id');
 
         switch($event->data) {
@@ -69,9 +74,17 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
                 if ( $this->getConf('allowpopupscript') ) {
                     $popupscript = p_get_metadata($ID, 'popupscript', true);
                     $script .= "try{(function($){".$popupscript."}(jQuery))}catch(e){alert('Could not execute popupscript: '+e);}";
+                    
+                    if ( ($google =& plugin_load('action', 'googleanalytics')) ) {
+                        $dest = str_replace(":", "/", $ID);
+                        if ( isset($_REQUEST['do']) ) {
+                            $dest .= "?do=".$_REQUEST['do'];
+                        }
+                        $script .= "if(window.ga) window.ga('send', 'event', 'wiki-action', 'popupviewer', '".$dest."', { nonInteraction: false} );";
+                    }
                 }
 
-                $head['popupscript'][] = array( 'type'=>'text/popupscript', '_data'=> $script);
+                $head['popupscript'][] = array( 'type'=>'text/popupscript', '_data'=> $script );
 
                 $data = '<div class="dokuwiki" style="padding-bottom: 10px;">' . p_wiki_xhtml($ID,'',true) . '</div>';
                 break;
@@ -90,7 +103,7 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
 
         header('Content-Type: text/html; charset=utf-8');
 
-        if ( !empty($head) ) {
+        if ( !empty($head['popupscript']) ) {
             trigger_event('TPL_METAHEADER_OUTPUT',$head,'_tpl_metaheaders_action',true);
         }
 
