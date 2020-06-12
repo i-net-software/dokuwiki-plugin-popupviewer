@@ -162,9 +162,10 @@
                 // Load image routine
                 internal.log("loading an image");
                 popupData.call = popupData.call || '_popup_load_image_meta';
-                $(new Image()).attr('src', popupData.src || this.href).load(function(){
+                var img = new Image()
+                img.onload = function() {
 
-                    var image = $(this);
+                    var image = $(img);
 
                     var wrapper = $('<div/>').load(BASE_URL, popupData, function() {
 
@@ -182,8 +183,9 @@
                         _.registerCloseHandler();
                         _.resizePopup(popupData.width, popupData.height, additionalContent.innerHeight(), image, false, popupData.hasNextPrevious);
                     });
-                });
-
+                };
+                img.src = popupData.src || this.href;
+            
             } else {
 
                 popupData.call = popupData.call || '_popup_load_file';
@@ -489,7 +491,7 @@
 
         _.handleNextAndPrevious = function(currentIsImage) {
 
-            if ( currentIsImage && _.popupImageStack && _.popupImageStack.size() > 1) {
+            if ( currentIsImage && _.popupImageStack && _.popupImageStack.size && _.popupImageStack.size() > 1) {
 
                 if ( _.isFirst() ) {
                     previous.addClass('inactive');
