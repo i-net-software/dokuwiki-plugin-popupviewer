@@ -85,8 +85,10 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
 
         if ( $exists ) {
             // is Media
-
-            $p1 = Doku_Handler_Parse_Media($orig);
+            if ( function_exists('Doku_Handler_Parse_Media') ) {
+                $p1 = Doku_Handler_Parse_Media($orig);
+                // TODO, this is not right in Hogfather!
+            }
 
             if ( empty($name) ) {
                 
