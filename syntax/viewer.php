@@ -54,17 +54,8 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
                 list($w, $h) = explode('x', $p, 2); // find Size
             }
         } 
-        
-        return array(trim($id), $name, $title, $w, $h, $orig, $close, null, $keepOpen);
-    }
 
-    function render($mode, Doku_Renderer $renderer, $data) {
-        global $ID, $conf, $JSINFO;
-
-        if ( $mode != 'xhtml' && $mode != 'metadata' ) { return true; }
-
-        list($id, $name, $title, $w, $h, $orig, $close, $isImageMap, $keepOpen) = $data;
-
+        $id = trim($id);
         $exists = false;
         if ( !empty($id) ) {
             $origID = $id;
@@ -73,6 +64,17 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
                 $id = $origID;
             }
         }
+
+        $p1 = Doku_Handler_Parse_Media($orig);
+        return array($id, $name, $title, $w, $h, $orig, $close, null, $keepOpen, $exists, $p1);
+    }
+
+    function render($mode, Doku_Renderer $renderer, $data) {
+        global $ID, $conf, $JSINFO;
+
+        if ( $mode != 'xhtml' && $mode != 'metadata' ) { return true; }
+
+        list($id, $name, $title, $w, $h, $orig, $close, $isImageMap, $keepOpen, $exists, $p1) = $data;
 
         if($mode === 'metadata') {
             $renderer->internalmedia($id,$title);
@@ -85,11 +87,6 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
 
         if ( $exists ) {
             // is Media
-            if ( function_exists('Doku_Handler_Parse_Media') ) {
-                $p1 = Doku_Handler_Parse_Media($orig);
-                // TODO, this is not right in Hogfather!
-            }
-
             if ( empty($name) ) {
                 
                 if ( !method_exists($renderer, '_media') ) {
