@@ -224,7 +224,7 @@
 
                             // Check for Javascript to execute
                             var scripts = popupScriptNode.find('popupscript');
-                            if ( scripts.size() > 0 ) {
+                            if ( scripts.length > 0 ) {
                                 
                                 var randomID = Math.ceil(Math.random()*1000000);
                                 content.attr('id', randomID);
@@ -491,7 +491,7 @@
 
         _.handleNextAndPrevious = function(currentIsImage) {
 
-            if ( currentIsImage && _.popupImageStack && _.popupImageStack.size && _.popupImageStack.size() > 1) {
+            if ( currentIsImage && _.popupImageStack && _.popupImageStack.size && _.popupImageStack.length > 1) {
 
                 if ( _.isFirst() ) {
                     previous.addClass('inactive');
