@@ -48,7 +48,7 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
         $params = explode('&', strtolower($param));
         $w = $h = $keepOpen = null;
         foreach( $params as $p ) {
-            if ( $p === 'keepOpen' ) {
+            if ( strtolower( $p ) === 'keepopen' ) {
                 $keepOpen = true;
             } else {
                 list($w, $h) = explode('x', $p, 2); // find Size
