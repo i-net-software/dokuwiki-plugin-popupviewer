@@ -145,7 +145,7 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
             $id=wl($id);
         }
 
-        $renderer->doc .= $this->_renderFinalPopupImage($id, $exists, $more, $name, $isImageMap, $script);
+        $renderer->doc .= $this->_renderFinalPopupImage($id, $exists, $more, $name, $isImageMap, $script, 'popupviewer');
 
         return true;
     }
