@@ -162,7 +162,7 @@
                 // Load image routine
                 internal.log("loading an image");
                 popupData.call = popupData.call || '_popup_load_image_meta';
-                var img = new Image()
+                var img = new Image();
                 img.onload = function() {
 
                     var image = $(img);
