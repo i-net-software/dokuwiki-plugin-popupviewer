@@ -60,6 +60,11 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
             'popupscript' => array()
         );
         $ID = getID('id');
+        
+        if (auth_quickaclcheck($ID) < AUTH_READ) {
+            echo "read permission error";
+            return;
+        }
 
         switch($event->data) {
             case '_popup_load_file' :
