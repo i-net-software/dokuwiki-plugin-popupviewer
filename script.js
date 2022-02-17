@@ -361,8 +361,8 @@
 
             offsetElement.css({width:'auto', height: 'auto'});
 
-            var width = offsetElement.naturalWidth() || offsetElement.width();
-            var height = offsetElement.naturalHeight() || offsetElement.height(); 
+            var width = offsetElement.naturalWidth() || offsetElement.outerWidth();
+            var height = offsetElement.naturalHeight() || offsetElement.outerHeight(); 
 
             // Reset to previous size so the whole thing will animate from the middle
             offsetElement.css({width:prevWidth, height: prevHeight});
