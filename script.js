@@ -191,7 +191,6 @@
                 popupData.call = popupData.call || '_popup_load_file';
                 popupData.src = popupData.src || BASE_URL;
                 var wrapper = $('<div/>').load(popupData.src, popupData, function(response, status, xhr) {
-
                     var success = function(node)
                     {
                         var popupScriptNode = node;
@@ -307,7 +306,6 @@
                     } else {
                         success(wrapper);
                     }
-
                 });
             }
         };
@@ -542,11 +540,11 @@
         
         _.addGoogleOutboundTrackingInformation = function( $findRoot ) {
             // track outgoing links, once the document was loaded
-            if (JSINFO.ga && JSINFO.ga.trackOutboundLinks) {
+            if ( window.ga ) {
                 // https://support.google.com/analytics/answer/1136920?hl=en
                 $findRoot.find('a.urlextern, a.interwiki').click(function (e) {
                     var url = this.href;
-                    ga('send', 'event', 'outbound', 'click', url, {
+                    window.ga('send', 'event', 'outbound', 'click', url, {
                         'transport': 'beacon',
                         'hitCallback': function () {}
                     });

@@ -85,7 +85,7 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
                         if ( isset($_REQUEST['do']) ) {
                             $dest .= "?do=".$_REQUEST['do'];
                         }
-                        $script .= "if(window.ga) window.ga('send', 'event', 'wiki-action', 'popupviewer', '".$dest."', { nonInteraction: false} );";
+                        $script .= "if(window.ga) window.ga('send', 'event', 'popupviewer', 'wiki-action', '".$dest."', { nonInteraction: false} );";
                     }
                 }
 
