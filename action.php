@@ -7,6 +7,8 @@
  * @author     Gerry Weissbach <gweissbach@inetsoftware.de>
  */
 
+use dokuwiki\Extension\Event;
+
 // must be run within Dokuwiki
 if(!defined('DOKU_INC')) die();
 
@@ -69,12 +71,11 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
         switch($event->data) {
             case '_popup_load_file' :
                 $INFO = pageinfo();
-                $json = new JSON();
                 $JSINFO['id'] = $ID;
                 $JSINFO['namespace'] = (string) $INFO['namespace'];
-                trigger_event('POPUPVIEWER_DOKUWIKI_STARTED',$head,null,true);
+                Event::createAndTrigger('POPUPVIEWER_DOKUWIKI_STARTED',$head,null,true);
 
-                $script = 'var JSINFO = '.$json->encode($JSINFO).';';
+                $script = 'var JSINFO = ' . json_encode($JSINFO) . ';';
                 
                 if ( $this->getConf('allowpopupscript') ) {
                     $popupscript = p_get_metadata($ID, 'popupscript', true);
@@ -109,7 +110,7 @@ class action_plugin_popupviewer extends DokuWiki_Action_Plugin {
         header('Content-Type: text/html; charset=utf-8');
 
         if ( !empty($head['popupscript']) ) {
-            trigger_event('TPL_METAHEADER_OUTPUT',$head,'_tpl_metaheaders_action',true);
+            Event::createAndTrigger('TPL_METAHEADER_OUTPUT',$head,'_tpl_metaheaders_action',true);
         }
 
         print $data;

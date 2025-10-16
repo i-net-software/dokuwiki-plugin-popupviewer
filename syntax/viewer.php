@@ -38,13 +38,21 @@ class syntax_plugin_popupviewer_viewer extends DokuWiki_Syntax_Plugin {
 
     function handle($match, $state, $pos, Doku_Handler $handler) {
 
+        global $ID;
+
         $close = strstr( $match, "{{popupclose>") !== false;
 
         $orig = substr($match, $close ? 13 : 8, -2);
-        list($id, $name) = explode('|', $orig, 2); // find ID/Params + Name Extension
-        list($name, $title) = explode('%', $name, 2); // find Name and Title
-        list($id, $param) = explode('?', $id, 2); // find ID + Params
-        
+        $partId = explode('|', $orig, 2); // find ID/Params + Name Extension
+        $id = $partId[0];
+        $name = $partId[1] ?? '';
+        $partName = explode('%', $name, 2); // find Name and Title
+        $name = $partName[0];
+        $title = $part[1] ?? '';
+        $partParam = explode('?', $id, 2); // find ID + Params
+        $id = $partParam[0];
+        $param = $partParam[1] ?? '';
+
         $params = explode('&', strtolower($param));
         $w = $h = $keepOpen = null;
         foreach( $params as $p ) {
